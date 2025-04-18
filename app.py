@@ -1,4 +1,5 @@
 from flask import Flask, render_template, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
 from forms import RegistrationForm, LoginForm
 from dotenv import load_dotenv
 import os
