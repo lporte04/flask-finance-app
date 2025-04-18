@@ -27,7 +27,8 @@ Flask supports Python 3.9 and newer. (python --version)
 3. Implement dashboard form(s)
 4. Implement dashboard calculation logic
 5. Implement dashboard display
-6. Implement profile/settings: change login information, profile picture (if we even implement this as a feature), dark mode (if we implement it), etc.
+6. Implement Investment API
+7. Implement profile/settings: change login information, profile picture (if we even implement this as a feature), dark mode (if we implement it), etc.
 
 # Current state of the project (this is from the last pull request):
 
