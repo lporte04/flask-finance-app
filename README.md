@@ -3,15 +3,15 @@
 Flask supports Python 3.9 and newer. (python --version)
 
 1. Create a venv
-For Mac/Linux: run `python3 -m venv .venv` in your project directory
-For Windows: run `py -3 -m venv .venv` in your project directory
+- For Mac/Linux: run `python3 -m venv .venv` in your project directory
+- For Windows: run `py -3 -m venv .venv` in your project directory
 2. Activate the venv
-Mac/Linux: `. .venv/bin/activate`
-Windows:  `.venv\Scripts\activate`
+- Mac/Linux: `. .venv/bin/activate`
+- Windows:  `.venv\Scripts\activate`
 3. Inside the venv, run
-`pip install Flask`
+- `pip install Flask`
 4. Install dependencies
-`pip install -r requirements.txt` <- this installs the dependencies listed in requirements.txt. Anytime new dependencies are installed, run `pip freeze > requirements.txt` to update the list of required dependencies.
+- `pip install -r requirements.txt` <- this installs the dependencies listed in requirements.txt. Anytime new dependencies are installed, run `pip freeze > requirements.txt` to update the list of required dependencies.
 
 `flask run --debug` use this to run the app in debug mode, which will auto update the app with any changes you make so you don't have to constantly type the run command.
 
