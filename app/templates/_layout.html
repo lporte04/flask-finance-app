@@ -31,8 +31,8 @@
           }
     </style>
     <div class="sidebar">
-        <a href="/"><h4>App Name</h4></a>
-        <a href="/dashboard">Dashboard</a>
+        <a href="{{ url_for('main.index') }}"><h4>App Name</h4></a>
+        <a href="{{ url_for('dashboard.view') }}">Dashboard</a>
         <a href="#">Investments</a>
         <a href="#">Settings</a>
         <a href="#">Logout</a>

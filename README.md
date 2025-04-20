@@ -21,8 +21,8 @@ Flask supports Python 3.9 and newer. (python --version)
 - Consider adding "remember me" feature
 - Consider adding "forgot password?" feature
 
-## Next Steps:
-1. Implement DB
+## TODO:
+1. ~Implement DB~
 2. Implement user logic, ensure register/login and logout functionality
 3. Implement dashboard form(s)
 4. Implement dashboard calculation logic
