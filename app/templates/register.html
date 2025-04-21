@@ -1,6 +1,6 @@
 {% extends '_top-navbar.html' %}
 
-{% block title %}Login{% endblock %}
+{% block title %}Register{% endblock %}
 {% block body %}
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -10,6 +10,20 @@
                     <h2 class="text-center mb-4">Create Account</h2>
                     <form method="POST" action="">
                         {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.name.label(class="form-label") }}
+                            {% if form.name.errors %}
+                                {{ form.name(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.name.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.name(class="form-control") }}
+                            {% endif %}
+                        </div>
                         
                         <div class="mb-3">
                             {{ form.email.label(class="form-label") }}
@@ -39,6 +53,20 @@
                             {% endif %}
                         </div>
                         
+                        <div class="mb-4">
+                            {{ form.confirm_password.label(class="form-label") }}
+                            {% if form.confirm_password.errors %}
+                                {{ form.confirm_password(class="form-control is-invalid") }}
+                                <div class="invalid-feedback">
+                                    {% for error in form.confirm_password.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.confirm_password(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        
                         <div class="d-grid">
                             {{ form.submit(class="btn btn-primary btn-lg") }}
                         </div>
@@ -48,7 +76,7 @@
             
             <div class="text-center mt-3">
                 <small class="text-muted">
-                    Don't have an account? <a href="{{ url_for('register') }}">Sign Up</a>
+                    Already have an account? <a href="{{ url_for('auth.login') }}">Sign In</a>
                 </small>
             </div>
         </div>
