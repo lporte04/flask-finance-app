@@ -1,7 +1,8 @@
 from datetime import date
 from app import db
+from flask_login import UserMixin
 
-class User(db.Model):
+class User(db.Model, UserMixin): # UserMixin is a class from Flask-Login that provides the methods needed for user auth.
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)

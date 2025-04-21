@@ -15,7 +15,7 @@
             top: 0;
             height: 100%;
             background-color: #f8f9fa;
-            padding: 2rem 1rem;
+            padding: 1rem 1rem 2rem;
             border-right: 1px solid #ddd;
           }
           .sidebar a {
@@ -29,15 +29,33 @@
             margin-left: 240px;
             padding: 2rem;
           }
+
+          .sidebar-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #ddd;
+          }
+
+          .user-info {
+            font-size: 0.9rem;
+            color: #555;
+          }
     </style>
+
     <div class="sidebar">
-        <a href="{{ url_for('main.index') }}"><h4>App Name</h4></a>
+      <div class="sidebar-header">
+        <div class="user-info">
+          <a href="{{ url_for('main.index') }}"><h4>Company Name</h4></a>
+          <p class="mb-0">Welcome, {{ current_user.name }}</p>
+        </div>
+      </div>
+
         <a href="{{ url_for('dashboard.view') }}">Dashboard</a>
         <a href="#">Investments</a>
         <a href="#">Settings</a>
-        <a href="#">Logout</a>
+        <a href="{{ url_for('auth.logout') }}">Logout</a>
     </div>
-    {% block body %}{% endblock %}
+    <div class="main">{% block body %}{% endblock %}</div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 </body>
 </html>

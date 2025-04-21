@@ -22,13 +22,14 @@ Flask supports Python 3.9 and newer. (python --version)
 - Consider adding "forgot password?" feature
 
 ## TODO:
-1. ~Implement DB~
-2. Implement user logic, ensure register/login and logout functionality
-3. Implement dashboard form(s)
-4. Implement dashboard calculation logic
-5. Implement dashboard display
-6. Implement Investment API
-7. Implement profile/settings: change login information, profile picture (if we even implement this as a feature), dark mode (if we implement it), etc.
+1. ~Implement DB~ (I forgot something, see #3 of TODO)
+2. ~Implement user logic, ensure register/login and logout functionality~
+3. DB update: Need to be storing their wages/income (hourly, salary, etc)
+4. Implement dashboard form(s)
+5. Implement dashboard calculation logic
+6. Implement dashboard display
+7. Implement Investment API
+8. Implement profile/settings: change login information, profile picture (if we even implement this as a feature), dark mode (if we implement it), etc.
 
 # Current state of the project (this is from the last pull request):
 
