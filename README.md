@@ -52,6 +52,7 @@ Flask supports Python 3.9 and newer. (python --version)
 
 [Install Postgres if it's not installed already](https://www.postgresql.org/download/)
 **NOTE: When setting up postgres, _write down_ the password you use for your superuser (postgres). Doesn't have to be complicated because you're just using this to run locally. Mine is 123abc**
+
 ![image](https://github.com/user-attachments/assets/a7a2ac60-cf01-411f-8d11-f806c3ac80b7)
 
 ### Video Setup
@@ -59,6 +60,7 @@ Flask supports Python 3.9 and newer. (python --version)
 Below is a video for how to set up the DB like I did, using [Datagrip](https://www.jetbrains.com/datagrip/). There is a free trial, and students can get a license for free.
 - [Postgres and Datagrip setup video](https://www.youtube.com/watch?v=EX81bDA-mkA)
 - **You can stop watching the youtube video above once you've downloaded postgres and installed datagrip. The video below will guide you through our application's specific setup from there.**
+
 https://github.com/user-attachments/assets/9c8b2e8a-500f-4cb7-b8ce-4e2e50400982
 
 If you don't want to use Datagrip, there are other apps you can use and you can likely find a tutorial for setting them up.
