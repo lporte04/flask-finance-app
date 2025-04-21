@@ -16,6 +16,8 @@ class Account(db.Model):
     min_balance_goal = db.Column(db.Float, nullable=False)
     weekly_spending_limit = db.Column(db.Float, nullable=False) # to store how much money the user wants to spend this week. tbd if this is used.
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    hourly_wage = db.Column(db.Float, nullable=True)
+    hours_per_week = db.Column(db.Float, nullable=True)
 
     expenses = db.relationship('RecurringExpense', backref='account', lazy=True)
     spendings = db.relationship('Spending', backref='account', lazy=True)

@@ -22,9 +22,9 @@ Flask supports Python 3.9 and newer. (python --version)
 - Consider adding "forgot password?" feature
 
 ## TODO:
-1. ~Implement DB~ (I forgot something, see #3 of TODO)
+1. ~Implement DB (I forgot something, see #3 of TODO)~
 2. ~Implement user logic, ensure register/login and logout functionality~
-3. DB update: Need to be storing their wages/income (hourly, salary, etc)
+3. ~DB update: Need to be storing their wages/income (hourly, salary, etc)~
 4. Implement dashboard form(s)
 5. Implement dashboard calculation logic
 6. Implement dashboard display
