@@ -28,7 +28,7 @@
 
 ***
 
-# Enviornment Setup
+# Environment Setup
 
 ## Flask Setup/Guide:
 [Here is a link to the flask documentation](https://flask.palletsprojects.com/en/stable/)
