@@ -3,4 +3,78 @@
 {% block title %}Dashboard{% endblock %}
 {% block body %}
 
+<div class="content">
+
+    <div class="net-worth-container">
+        <h2>Net Worth</h2>
+        <div class="section net-worth">
+            <h3>Your Estimated Net Worth</h3>
+            <p>${{ net_worth }}</p>
+        </div>
+
+        <div class="assets-chart">
+            <i></i>
+        </div>
+        <div class="section assets-list">
+            <h3>Assets</h3>
+            <ul>
+                {% for asset in assets %}
+                    <li>{{ asset.name }}: ${{ asset.value }}</li>
+                {% else %}
+                    <li>No assets added yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="investment-portfolio-container">
+        <div>
+            <h2>Investment Portfolio</h2>
+            <i></i>
+        </div>
+        <div class="section investments-list">
+            <h3>Investments</h3>
+            <ul>
+                {% for inv in investments %}
+                    <li>{{ inv.stock_name }}: ${{ inv.amount or 'N/A' }}</li>
+                {% else %}
+                    <li>No investments added yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="budget-container">
+        <div>
+            <h2>Budget</h2>
+            <div class="section spending-list">
+                <h3>Monthly Spending</h3>
+                <ul>
+                    {% for s in spendings %}
+                        <li>{{ s.item }}: ${{ s.amount }} on {{ s.date }}</li>
+                    {% else %}
+                        <li>No spending records yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="section budget-list">
+                <h3>Monthly Saving</h3>
+                <ul>
+                    {% for s in savingsgoal %}
+                        <li>{{ s.name }}: ${{ s.amount }}</li>
+                    {% else %}
+                        <li>No spending records yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<footer>
+    <p class="font-sm center-text">&copy;2025 4155 Group 9</p>
+</footer>
+
 {% endblock %}
