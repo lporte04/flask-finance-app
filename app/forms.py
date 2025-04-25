@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError
+from wtforms import StringField, PasswordField, SubmitField, FloatField
+from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError, NumberRange, Optional
 from app.models import User
 
 
@@ -20,3 +20,10 @@ class LoginForm(FlaskForm): # Consider adding "remember me" functionality later
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
+
+class FinancialSetupForm(FlaskForm):
+    current_balance = FloatField('Current Balance', validators=[DataRequired(), NumberRange(min=0)])
+    min_balance_goal = FloatField('Minimum Balance Goal', validators=[Optional(), NumberRange(min=0)])
+    hourly_wage = FloatField('Hourly Wage', validators=[DataRequired(), NumberRange(min=0)])
+    hours_per_week = FloatField('Hours Worked Per Week', validators=[DataRequired(), NumberRange(min=0)])
+    submit = SubmitField('Save')
