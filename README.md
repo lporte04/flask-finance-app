@@ -44,7 +44,7 @@ Flask supports Python 3.9 and newer. (python --version)
 - `pip install Flask`
 4. Install dependencies
 - `pip install -r requirements.txt` <- this installs the dependencies listed in requirements.txt. Anytime new dependencies are installed, run `pip freeze > requirements.txt` to update the list of required dependencies.
-5. Setup your .env file (minus the database line, since you'll have to do that after setting up the DB)
+5. [Setup your .env file](#env-setup) (minus the database line, since you'll have to do that after setting up the DB)
 
 `flask run --debug` use this to run the app in debug mode, which will auto update the app with any changes you make so you don't have to constantly type the run command. (NOTE: in order for this to work, you need your .env file setup properly)
 
