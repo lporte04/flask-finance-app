@@ -96,7 +96,8 @@ If you don't want to use Datagrip, there are other apps you can use and you can 
 5. Implement dashboard calculation logic (Liam)
 6. Implement dashboard display
 7. Implement Investment API (Sam)
-8. Implement profile/settings: change login information, profile picture (if we even implement this as a feature), dark mode (if we implement it), etc. (Justice implement dark mode)
+8. Implement profile/settings: change login information (Hayden)
+9. dark mode (if we implement it) (Justice implement dark mode)
 
 ***
 
