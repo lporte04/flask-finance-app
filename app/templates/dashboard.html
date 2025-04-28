@@ -3,6 +3,55 @@
 {% block title %}Dashboard{% endblock %}
 {% block body %}
 
+<style>
+    .content {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between; /* Space out the containers */
+        padding: 20px;
+    }
+    
+    /* Style for each container (net worth, investments, budget) */
+    .net-worth-container, .investment-portfolio-container, .budget-container {
+        flex: 1; /* Each container will take up equal space */
+        margin: 10px;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        background-color: #f9f9f9;
+    }
+    
+    /* Header styles */
+    h2 {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+    
+    /* Subheader styles */
+    h3 {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+    
+    /* Style for the lists (assets, investments, spendings, savings) */
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    
+    li {
+        margin: 10px 0;
+    } 
+
+    #investmentDonutChart {
+        width: 50% !important;
+        height: 50% !important;
+        margin: 0 auto;
+    }
+
+</style>
+
 <div class="content">
 
     <div class="net-worth-container">
@@ -13,7 +62,7 @@
         </div>
 
         <div class="assets-chart">
-            <i></i>
+            <canvas id="netWorthDonutChart"></canvas>
         </div>
         <div class="section assets-list">
             <h3>Assets</h3>
@@ -30,7 +79,7 @@
     <div class="investment-portfolio-container">
         <div>
             <h2>Investment Portfolio</h2>
-            <i></i>
+            <canvas id="investmentLineChart"></canvas>
         </div>
         <div class="section investments-list">
             <h3>Investments</h3>
@@ -41,6 +90,9 @@
                     <li>No investments added yet.</li>
                 {% endfor %}
             </ul>
+        </div>
+        <div class="investment-donut-chart">
+            <canvas id="investmentDonutChart"></canvas>
         </div>
     </div>
 
@@ -57,6 +109,14 @@
                     {% endfor %}
                 </ul>
             </div>
+            
+            <div class="spending-line-chart">
+                <canvas id="spendingLineChart"></canvas>
+            </div>
+
+            <div class="spending-bar-chart">
+                <canvas id="spendingBarChart"></canvas>
+            </div>
 
             <div class="section budget-list">
                 <h3>Monthly Saving</h3>
@@ -68,6 +128,7 @@
                     {% endfor %}
                 </ul>
             </div>
+
         </div>
     </div>
 </div>
@@ -76,5 +137,173 @@
 <footer>
     <p class="font-sm center-text">&copy;2025 4155 Group 9</p>
 </footer>
+
+<!-- Script for chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Donut chart for net_worth
+    var ctx = document.getElementById('netWorthDonutChart').getContext('2d');
+
+    var labels = [{% for asset in assets %}"{{ asset.name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+    var data = [{% for asset in assets %}{{ asset.value }}{% if not loop.last %}, {% endif %}{% endfor %}];
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,  // Asset names
+            datasets: [{
+                data: data,  // Asset values
+                backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#FF5733', '#C70039'],
+            }]
+        }
+    });
+    //Investment history line chart
+    async function renderMultiStockChart(symbols) {
+        const response = await fetch('/stock-history?' + symbols.map(s => `symbol=${s}`).join('&'));
+        const data = await response.json();
+
+        const colors = ['#FF5733', '#36A2EB', '#FFCE56', '#8E44AD', '#2ECC71', '#1ABC9C', '#E67E22'];
+        const datasets = [];
+
+        symbols.forEach((symbol, index) => {
+            const stockData = data[symbol] || [];
+            const prices = stockData.map(d => d.close);
+
+            datasets.push({
+                label: symbol,
+                data: prices,
+                borderColor: colors[index % colors.length],
+                fill: false,
+                tension: 0.1
+            });
+        });
+
+        const ctx5 = document.getElementById('investmentLineChart').getContext('2d');
+        new Chart(ctx5, {
+            type: 'line',
+            data: {
+                labels: data[symbols[0]] ? data[symbols[0]].map(d => d.date) : [],
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Date' }
+                    },
+                    y: {
+                        title: { display: true, text: 'Price ($)' }
+                    }
+                }
+            }
+        });
+    }
+
+    // Auto-load all user's stock investments
+    const stockSymbols = [{% for inv in investments %}"{{ inv.stock_name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+    if (stockSymbols.length > 0) {
+        renderMultiStockChart(stockSymbols);
+    }
+
+
+    // Donut chart for investments
+    var ctx2 = document.getElementById('investmentDonutChart').getContext('2d');
+
+    var investmentLabels = [{% for inv in investments %}"{{ inv.stock_name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+    var investmentAmounts = [{% for inv in investments %}{{ inv.amount or 0 }}{% if not loop.last %}, {% endif %}{% endfor %}];
+
+    new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: investmentLabels,
+            datasets: [{
+                data: investmentAmounts,
+                backgroundColor: ['#FF5733', '#36A2EB', '#FFCE56', '#FF9E1B', '#C70039'],
+            }]
+        }
+    });
+
+    // Spending Over Time Line Chart
+    var ctx3 = document.getElementById('spendingLineChart').getContext('2d');
+    var spendingDates = [{% for s in spendings %}"{{ s.date }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+    var spendingAmounts = [{% for s in spendings %}{{ s.amount }}{% if not loop.last %}, {% endif %}{% endfor %}];
+        
+    new Chart(ctx3, {
+        type: 'line',
+        data: {
+            labels: spendingDates,
+            datasets: [{
+            label: 'Spending Over Time',
+                data: spendingAmounts,
+                borderColor: '#FF5733',
+                fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Spending ($)'
+                        }
+                    }
+                }
+            }
+        });
+    
+        // Spending Breakdown Bar Chart
+        var ctx4 = document.getElementById('spendingBarChart').getContext('2d');
+        var expenseNames = [{% for s in spendings %}"{{ s.item }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+        var expenseAmounts = [{% for s in spendings %}{{ s.amount }}{% if not loop.last %}, {% endif %}{% endfor %}];
+        
+        new Chart(ctx4, {
+            type: 'bar',
+            data: {
+                labels: expenseNames,
+                datasets: [{
+                    label: 'Expenses Breakdown',
+                    data: expenseAmounts,
+                    backgroundColor: '#FFCE56',
+                    borderColor: '#FF5733',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Amount ($)'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Expense Item'
+                        },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+
+
+</script>
 
 {% endblock %}

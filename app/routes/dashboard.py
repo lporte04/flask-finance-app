@@ -1,6 +1,9 @@
 from flask import Blueprint, render_template
 from flask_login import login_required, current_user
 from app.models import Account, Spending, SavingsGoal, Investment, RecurringExpense
+#imports for alphavantage API
+import requests
+from flask import jsonify, request
 
 dashboard = Blueprint('dashboard', __name__)
 
@@ -67,4 +70,37 @@ def view():
         spendings=spendings,
         savingsgoal=savingsgoal
     )
+
+
+#API
+@dashboard.route('/stock-history')
+@login_required
+def multi_stock_history():
+    symbols = request.args.getlist('symbol')  # ?symbol=AAPL&symbol=GOOG&symbol=MSFT
+    API_KEY = 'YOUR_ALPHA_VANTAGE_API_KEY'
+
+    all_data = {}
+    for symbol in symbols:
+        url = 'https://www.alphavantage.co/query'
+        params = {
+            'function': 'TIME_SERIES_DAILY_ADJUSTED',
+            'symbol': symbol,
+            'apikey': API_KEY
+        }
+        r = requests.get(url, params=params)
+        data = r.json()
+
+        if 'Time Series (Daily)' not in data:
+            continue
+
+        series = data['Time Series (Daily)']
+        history = [
+            {'date': d, 'close': float(v['4. close'])}
+            for d, v in sorted(series.items(), reverse=False)
+        ][:30]
+
+        all_data[symbol] = history
+
+    print(all_data)
+    return jsonify(all_data)
 
