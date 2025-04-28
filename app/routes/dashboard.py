@@ -11,10 +11,6 @@ dashboard = Blueprint('dashboard', __name__)
 @login_required
 def view():
 
-    #return render_template('dashboard.html')
-
-    ##generated code to get data on dashboard
-
     account = Account.query.filter_by(user_id=current_user.id).first()
 
     if account is None:
@@ -76,14 +72,14 @@ def view():
 @dashboard.route('/stock-history')
 @login_required
 def multi_stock_history():
-    symbols = request.args.getlist('symbol')  # ?symbol=AAPL&symbol=GOOG&symbol=MSFT
-    API_KEY = 'YOUR_ALPHA_VANTAGE_API_KEY'
+    symbols = request.args.getlist('symbol') 
+    API_KEY = 'L3EONWL3A9WT85W1'
 
     all_data = {}
     for symbol in symbols:
         url = 'https://www.alphavantage.co/query'
         params = {
-            'function': 'TIME_SERIES_DAILY_ADJUSTED',
+            'function': 'TIME_SERIES_DAILY',
             'symbol': symbol,
             'apikey': API_KEY
         }
@@ -101,6 +97,5 @@ def multi_stock_history():
 
         all_data[symbol] = history
 
-    print(all_data)
     return jsonify(all_data)
 

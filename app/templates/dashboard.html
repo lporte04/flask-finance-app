@@ -49,6 +49,11 @@
         height: 50% !important;
         margin: 0 auto;
     }
+    #investmentLineChart {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 auto;
+    }
 
 </style>
 
@@ -150,9 +155,9 @@
     new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: labels,  // Asset names
+            labels: labels,
             datasets: [{
-                data: data,  // Asset values
+                data: data,
                 backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#FF5733', '#C70039'],
             }]
         }
