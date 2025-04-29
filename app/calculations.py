@@ -1,6 +1,6 @@
 from datetime import date
 from sqlalchemy.orm import Session
-from models import User, Account, RecurringExpense, Spending, SavingsGoal
+from app.models import User, Account, RecurringExpense, Spending, SavingsGoal
 
 class BudgetManager:
     def __init__(self, db_session: Session, account_id: int):
@@ -22,10 +22,10 @@ class BudgetManager:
                 total += exp.amount / 4  # Roughly 4 weeks in a month
             elif exp.frequency == 'daily':
                 total += exp.amount * 7  # 7 days a week
-        return total
+        return float(total)
 
     def calculate_weekly_spendable(self) -> float:
-        return max(0, self.calculate_weekly_income() - self.calculate_weekly_expenses())
+        return max(0.00, self.calculate_weekly_income() - self.calculate_weekly_expenses())
 
     def week_update(self):
         available = self.calculate_weekly_spendable()
@@ -70,7 +70,7 @@ class BudgetManager:
             if all_saved:
                 break
 
-            self.simulate_week()
+            self.week_update()
             weeks += 1
 
         # Restore balance and spending
