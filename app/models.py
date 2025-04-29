@@ -23,6 +23,7 @@ class Account(db.Model):
     spendings = db.relationship('Spending', backref='account', lazy=True)
     savings_goals = db.relationship('SavingsGoal', backref='account', lazy=True)
     investments = db.relationship('Investment', backref='account', lazy=True)
+    assets = db.relationship('Asset', backref='account', lazy=True)
 
 class RecurringExpense(db.Model): # This is a class to store recurring expenses like rent, subscriptions, etc.
     id = db.Column(db.Integer, primary_key=True)
