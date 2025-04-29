@@ -47,4 +47,11 @@ class SavingsGoal(db.Model): # Let the user set a savings goal for a specific it
 class Investment(db.Model): # Minimalistic investment tracking. Expand later.
     id = db.Column(db.Integer, primary_key=True)
     stock_name = db.Column(db.String(50), nullable=False)
+    amount = db.Column(db.Float, nullable=False) # Amount invested in the stock.
+    account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
+
+class Asset(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    value = db.Column(db.Float, nullable=False)
     account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
