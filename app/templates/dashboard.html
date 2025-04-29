@@ -29,9 +29,10 @@
         background-color: #ffffff;
         border: 1px solid #ddd;
         border-radius: 10px;
-        padding: 15px;
+        padding: 15px 15px 30px 15px;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
         flex-shrink: 0;
+        overflow-y: auto;
     }
 
     h2{
@@ -51,6 +52,12 @@
 
     .height-50 {
         height: 50%;
+    }
+    .height-40 {
+        height: 40%;
+    }
+    .height-60 {
+        height: 60%;
     }
 
     .height-75 {
@@ -148,6 +155,44 @@
     .expense-amount {
         text-align: right;
     }
+
+    .progress-container {
+        background-color: #eee;
+        border-radius: 10px;
+        overflow: hidden;
+        height: 15px;
+        margin-top: 5px;
+    }
+    
+    .progress-bar {
+        height: 100%;
+        text-align: right;
+        padding-right: 5px;
+        color: white;
+        line-height: 15px;
+        font-size: 12px;
+        transition: width 0.6s ease-in-out;
+        border-radius: 10px;
+    }
+    .progress-bar.low {
+        background-color: #e74c3c;  /* Red */
+    }
+    .progress-bar.medium {
+        background-color: #f1c40f;  /* Yellow */
+    }
+    .progress-bar.high {
+        background-color: #2ecc71;  /* Green */
+    }
+
+    .health-score-module canvas {
+        max-height: 120px;
+    }
+
+    .health-score-module {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
 </style>
 
 <div class="dashboard">
@@ -200,23 +245,48 @@
     <div class="column">
         <div class="module height-50">
             <h2>Savings Goals</h2>
-            <canvas></canvas>
+            {% if savings_goals %}
+        <ul>
+        {% for goal in savings_goals %}
+            <li style="margin-bottom: 15px;">
+                <strong>{{ goal.item }}</strong>: ${{ goal.current_amount }} / ${{ goal.cost }}
+                <div class="progress-container">
+                    <div class="progress-bar 
+                        {% if goal.progress_percent < 50 %}low
+                        {% elif goal.progress_percent < 80 %}medium
+                        {% else %}high
+                        {% endif %}"
+                        style="width: {{ goal.progress_percent }}%;">
+                        {{ goal.progress_percent | round(0) }}%
+                </div>               
+                {% if goal.is_funded %}
+                    <span style="color: green;">Goal reached! 🎉</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No savings goals added yet.</p>
+    {% endif %}
         </div>
         
-        <div class="module height-50">
-            <h2>TBD</h2>
-            <canvas></canvas>
+        <div class="module height-50 health-score-module">
+            <h2>Financial Health Score</h2>
+            <canvas id="healthGauge"></canvas>
+            <p style="text-align: center; font-size: 18px; margin-top: 10px;">
+                Score: <strong>{{ health_score }}</strong>/100
+            </p>
         </div>
     </div>
 
     <!-- Column 4: Investments -->
     <div class="column">
-        <div class="module height-30">
+        <div class="module height-40">
             <h2>Investment Trends</h2>
             <canvas id="investmentLineChart"></canvas>
         </div>
         
-        <div class="module height-70">
+        <div class="module height-60">
             <h2>Investment Allocation</h2>
             <canvas id="investmentDonutChart"></canvas>
             <h2>Investments</h2>
@@ -251,18 +321,76 @@
             }]
         }
     });
+    
+
+
+    // Donut chart for investments
+    var ctx2 = document.getElementById('investmentDonutChart').getContext('2d');
+
+    var investmentLabels = [{% for inv in investments %}"{{ inv.stock_name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+    var investmentAmounts = [{% for inv in investments %}{{ inv.amount or 0 }}{% if not loop.last %}, {% endif %}{% endfor %}];
+
+    new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: investmentLabels,
+            datasets: [{
+                data: investmentAmounts,
+                backgroundColor: ['#003300', '#006600', '#009933', '#33cc33', '#99ff99'],
+            }]
+        }
+    });
+    //financial health gauge
+    const healthGauge = document.getElementById('healthGauge').getContext('2d');
+
+    const score = {{ health_score | default(0) }};  // passed from Flask
+    const remaining = 100 - score;
+
+    let backgroundColor = [];
+    // Set color based on the score
+    if (score <= 30) {
+        backgroundColor = ['#ff5f5f', '#e0e0e0']; // Red for low score
+    } else if (score <= 70) {
+        backgroundColor = ['#ffbf00', '#e0e0e0']; // Yellow for medium score
+    } else {
+        backgroundColor = ['#4caf50', '#e0e0e0']; // Green for high score
+    }
+
+    new Chart(healthGauge, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [score, remaining],
+                backgroundColor: backgroundColor,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            rotation: -90,
+            circumference: 180,
+            cutout: '80%',
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+            }
+        }
+    });
+
     //Investment history line chart
     async function renderMultiStockChart(symbols) {
         const response = await fetch('/stock-history?' + symbols.map(s => `symbol=${s}`).join('&'));
         const data = await response.json();
-        
+       
+
 
         const colors = ['#003300', '#006600', '#009933', '#33cc33', '#99ff99'];
         const datasets = [];
 
+
         symbols.forEach((symbol, index) => {
             const stockData = data[symbol] || [];
             const prices = stockData.map(d => d.close);
+
 
             datasets.push({
                 label: symbol,
@@ -272,6 +400,7 @@
                 tension: 0.1
             });
         });
+
 
         const ctx5 = document.getElementById('investmentLineChart').getContext('2d');
         new Chart(ctx5, {
@@ -300,29 +429,13 @@
         });
     }
 
+
     // Auto-load all user's stock investments
     const stockSymbols = [{% for inv in investments %}"{{ inv.stock_name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
     if (stockSymbols.length > 0) {
         renderMultiStockChart(stockSymbols);
     }
 
-
-    // Donut chart for investments
-    var ctx2 = document.getElementById('investmentDonutChart').getContext('2d');
-
-    var investmentLabels = [{% for inv in investments %}"{{ inv.stock_name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
-    var investmentAmounts = [{% for inv in investments %}{{ inv.amount or 0 }}{% if not loop.last %}, {% endif %}{% endfor %}];
-
-    new Chart(ctx2, {
-        type: 'doughnut',
-        data: {
-            labels: investmentLabels,
-            datasets: [{
-                data: investmentAmounts,
-                backgroundColor: ['#003300', '#006600', '#009933', '#33cc33', '#99ff99'],
-            }]
-        }
-    });
 
     
 
