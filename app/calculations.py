@@ -1,6 +1,6 @@
 from datetime import date
 from sqlalchemy.orm import Session
-from app.models import User, Account, RecurringExpense, Spending, SavingsGoal
+from app.models import User, Account, RecurringExpense, Spending, SavingsGoal, SavingsDeposit
 
 class BudgetManager:
     def __init__(self, db_session: Session, account_id: int):
