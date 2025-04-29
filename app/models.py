@@ -44,7 +44,34 @@ class SavingsGoal(db.Model): # Let the user set a savings goal for a specific it
     cost = db.Column(db.Float, nullable=False)
     account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
 
+    # This is a relationship to the SavingsDeposit class. It allows us to access all deposits made towards this goal.
+    # cascade="all, delete-orphan" means that if a SavingsGoal is deleted, all its associated SavingsDeposits will also be deleted.
+    deposits = db.relationship('SavingsDeposit', backref='goal', lazy=True, cascade="all, delete-orphan")
+    
+    # This is a property that calculates the current amount saved towards the goal by summing up all deposits.
+    @property
+    def current_amount(self):
+        return sum(deposit.amount for deposit in self.deposits)
+    
+    # This is a property that checks if the goal is funded. It returns True if the current amount is greater than or equal to the cost of the item.
+    @property
+    def is_funded(self):
+        return self.current_amount >= self.cost
+
+class SavingsDeposit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    amount = db.Column(db.Float, nullable=False)
+    date = db.Column(db.Date, default=date.today)
+    savings_goal_id = db.Column(db.Integer, db.ForeignKey('savings_goal.id'), nullable=False)
+
 class Investment(db.Model): # Minimalistic investment tracking. Expand later.
     id = db.Column(db.Integer, primary_key=True)
     stock_name = db.Column(db.String(50), nullable=False)
+    amount = db.Column(db.Float, nullable=False) # Amount invested in the stock.
+    account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
+
+class Asset(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    value = db.Column(db.Float, nullable=False)
     account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
