@@ -26,56 +26,31 @@
     }
 
     .module {
-        background-color: #ffffff;
+        background-color: #fff;
         border: 1px solid #ddd;
         border-radius: 10px;
-        padding: 15px 15px 30px 15px;
+        padding: 15px 15px 30px;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-        flex-shrink: 0;
         overflow-y: auto;
+        flex-shrink: 0;
     }
 
-    h2{
-        font-size: 18px;
-        margin: 0 0 10px;
-        font-weight: 700;
-    }
-
-    /* Heights for each modular section */
-    .height-25 {
-        height: 25%;
-    }
-
-    .height-35 {
-        height: 35%;
-    }
-
-    .height-50 {
-        height: 50%;
-    }
-    .height-40 {
-        height: 40%;
-    }
-    .height-60 {
-        height: 60%;
-    }
-
-    .height-75 {
-        height: 75%;
-    }
+    .height-25 { height: 25%; }
+    .height-35 { height: 35%; }
+    .height-40 { height: 40%; }
+    .height-50 { height: 50%; }
+    .height-60 { height: 60%; }
+    .height-75 { height: 75%; }
 
     .fill {
         flex: 1;
         overflow-y: auto;
     }
 
-    canvas {
-        max-width: 100%;
-        height: auto;
-    }
-
     h2, h3 {
+        font-size: 18px;
         margin: 0 0 10px;
+        font-weight: 700;
     }
 
     ul {
@@ -88,72 +63,42 @@
         margin-bottom: 8px;
     }
 
-    .net-worth-value {
-        font-size: 28px; 
-        font-weight: bold; 
-        margin-top: 10px;
-    }
     .net-worth-box {
         display: flex;
         flex-direction: column;
-        justify-content: center; 
-        align-items: center;     
+        justify-content: center;
+        align-items: center;
         text-align: center;
     }
 
-    .module.height-25 {
-        height: 25%;  
-        overflow-y: auto; 
-        padding-right: 10px;  
+    .net-worth-value {
+        font-size: 28px;
+        font-weight: bold;
+        margin-top: 10px;
     }
 
     .spending-item {
         display: flex;
-        flex-direction: column;  
-        margin-bottom: 15px; 
+        flex-direction: column;
+        margin-bottom: 15px;
     }
-    
+
     .spending-details {
         display: flex;
-        justify-content: space-between;  
-        font-weight: bold; 
+        justify-content: space-between;
+        font-weight: bold;
     }
-    
-    .spending-item-name {
-        flex: 1;
-        text-align: left;   
-    }
-    
-    .spending-amount {
-        text-align: right;  
-    }
-    
+
     .spending-date {
-        font-size: 12px;      
-        color: #888;       
-        text-align: left; 
+        font-size: 12px;
+        color: #888;
         margin-top: 5px;
     }
 
-    .module.height-35 {
-        height: 35%; 
-        overflow-y: auto;
-        padding-right: 10px;
-    }
-    
     .expense-item {
         display: flex;
-        justify-content: space-between; 
-        margin-bottom: 15px; 
-    }
-    
-    .expense-name {
-        flex: 1;
-        text-align: left; 
-    }
-    
-    .expense-amount {
-        text-align: right;
+        justify-content: space-between;
+        margin-bottom: 15px;
     }
 
     .progress-container {
@@ -163,7 +108,7 @@
         height: 15px;
         margin-top: 5px;
     }
-    
+
     .progress-bar {
         height: 100%;
         text-align: right;
@@ -174,25 +119,36 @@
         transition: width 0.6s ease-in-out;
         border-radius: 10px;
     }
-    .progress-bar.low {
-        background-color: #e74c3c;  /* Red */
-    }
-    .progress-bar.medium {
-        background-color: #f1c40f;  /* Yellow */
-    }
-    .progress-bar.high {
-        background-color: #2ecc71;  /* Green */
-    }
 
-    .health-score-module canvas {
-        max-height: 120px;
-    }
+    .progress-bar.low { background-color: #e74c3c; }
+    .progress-bar.medium { background-color: #f1c40f; }
+    .progress-bar.high { background-color: #2ecc71; }
 
     .health-score-module {
         display: flex;
         flex-direction: column;
         justify-content: space-between;
     }
+
+    .chart-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+    }
+
+    canvas {
+        width: 100% !important;
+        height: auto !important;
+        display: block;
+        max-height: 400px;
+    }
+
+    canvas#healthGauge {
+        max-height: 120px;
+    }
+
+
 </style>
 
 <div class="dashboard">
@@ -238,7 +194,7 @@
 
         <div class="module height-50">
             <h2>Income vs Expense</h2>
-            <canvas id="incomeVsExpenseChart"></canvas>
+                <canvas id="incomeVsExpenseChart"></canvas>
         </div>
     </div>
     <!-- Column 3 Savings-->
@@ -343,7 +299,7 @@
     //financial health gauge
     const healthGauge = document.getElementById('healthGauge').getContext('2d');
 
-    const score = {{ health_score | default(0) }};  // passed from Flask
+    const score = {{ health_score | default(0) }};
     const remaining = 100 - score;
 
     let backgroundColor = [];
@@ -376,67 +332,202 @@
         }
     });
 
-    //Investment history line chart
-    async function renderMultiStockChart(symbols) {
-        const response = await fetch('/stock-history?' + symbols.map(s => `symbol=${s}`).join('&'));
-        const data = await response.json();
-       
+    // Investment history line chart
+async function renderMultiStockChart(symbols) {
+    const response = await fetch('/stock-history?' + symbols.map(s => `symbol=${s}`).join('&'));
+    const data = await response.json();
 
+    const colors = ['#003300', '#006600', '#009933', '#33cc33', '#99ff99'];
+    const datasets = [];
 
-        const colors = ['#003300', '#006600', '#009933', '#33cc33', '#99ff99'];
-        const datasets = [];
+    // Process the stock data for monthly aggregation
+    symbols.forEach((symbol, index) => {
+        const stockData = data[symbol] || [];
+        
+        // Aggregate daily data into monthly data
+        const monthlyData = [];
+        let currentMonth = '';
+        let monthData = [];
 
+        stockData.forEach((entry) => {
+            const date = new Date(entry.date);
+            const month = `${date.getFullYear()}-${date.getMonth() + 1}`;  // Format: YYYY-MM
 
-        symbols.forEach((symbol, index) => {
-            const stockData = data[symbol] || [];
-            const prices = stockData.map(d => d.close);
-
-
-            datasets.push({
-                label: symbol,
-                data: prices,
-                borderColor: colors[index % colors.length],
-                fill: false,
-                tension: 0.1
-            });
+            // If it's the same month, collect the data
+            if (month === currentMonth) {
+                monthData.push(entry.close);
+            } else {
+                // If we moved to a new month, push the previous month's data (use the last price for that month)
+                if (currentMonth) {
+                    const monthClose = monthData[monthData.length - 1];  // Use the last closing price for the month
+                    monthlyData.push({ date: currentMonth, close: monthClose });
+                }
+                // Start a new month
+                currentMonth = month;
+                monthData = [entry.close];
+            }
         });
 
+        // Push the last month's data
+        if (monthData.length > 0) {
+            const monthClose = monthData[monthData.length - 1];  // Use the last closing price for the month
+            monthlyData.push({ date: currentMonth, close: monthClose });
+        }
 
-        const ctx5 = document.getElementById('investmentLineChart').getContext('2d');
-        new Chart(ctx5, {
-            type: 'line',
+        // Create the dataset for the chart
+        datasets.push({
+            label: symbol,
+            data: monthlyData.map(d => d.close), // Only use the closing price
+            borderColor: colors[index % colors.length],
+            fill: false,
+            tension: 0.1
+        });
+    });
+
+    const ctx5 = document.getElementById('investmentLineChart').getContext('2d');
+
+    // Prepare the labels (months)
+    const labels = datasets.length > 0 && datasets[0].data.length > 0 
+        ? datasets[0].data.map((_, i) => datasets[0].data[i].date)
+        : [];
+
+    new Chart(ctx5, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 20,
+                    bottom: 10
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: {
+                            size: 14
+                        }
+                    },
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: false,
+                    title: {
+                        display: true,
+                        text: 'Price ($)',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    ticks: {
+                        font: {
+                            size: 14
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Auto-load all user's stock investments
+const stockSymbols = [{% for inv in investments %}"{{ inv.stock_name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+if (stockSymbols.length > 0) {
+    renderMultiStockChart(stockSymbols);
+}
+
+    //income vs expenses chart
+    fetch('/weekly-summary')
+    .then(response => response.json())
+    .then(data => {
+        const labels = data.map(item => item.week);
+        const incomes = data.map(item => item.income);
+        const expenses = data.map(item => item.expenses);
+
+        const ctx = document.getElementById('incomeVsExpenseChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
             data: {
-                labels: data[symbols[0]] ? data[symbols[0]].map(d => d.date) : [],
-                datasets: datasets
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: incomes,
+                        backgroundColor: '#2ecc71'
+                    },
+                    {
+                        label: 'Expenses',
+                        data: expenses,
+                        backgroundColor: '#e74c3c'
+                    }
+                ]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 20,
+                        bottom: 10
+                    }
+                },
                 plugins: {
                     legend: {
-                        display: true,
                         position: 'bottom'
                     }
                 },
                 scales: {
-                    x: {
-                        title: { display: true, text: 'Date' }
-                    },
                     y: {
-                        title: { display: true, text: 'Price ($)' }
+                        beginAtZero: true,
+                        ticks: {
+                            font: { size: 14 }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Amount ($)',
+                            font: { size: 16 }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 12 }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Week',
+                            font: { size: 14 }
+                        }
                     }
                 }
             }
         });
-    }
-
-
-    // Auto-load all user's stock investments
-    const stockSymbols = [{% for inv in investments %}"{{ inv.stock_name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
-    if (stockSymbols.length > 0) {
-        renderMultiStockChart(stockSymbols);
-    }
-
-
+    });
     
 
 </script>

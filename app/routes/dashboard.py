@@ -2,6 +2,10 @@ from flask import Blueprint, render_template, jsonify, request
 from flask_login import login_required, current_user
 from app.models import Account, Spending, SavingsGoal, Investment, Asset
 import requests
+#imports for income vs expense
+from datetime import timedelta, date
+from app.calculations import BudgetManager
+from app import db
 
 dashboard = Blueprint('dashboard', __name__)
 
@@ -82,10 +86,15 @@ def multi_stock_history():
             continue
 
         series = data['Time Series (Daily)']
+        
+        # Convert to a list of dictionaries with date and closing price
         history = [
             {'date': d, 'close': float(v['4. close'])}
             for d, v in sorted(series.items(), reverse=False)
-        ][:30]
+        ]
+
+        # Only get the last 6 months of data (approximately 6 months = 180 days)
+        history = history[:180]
 
         all_data[symbol] = history
 
@@ -105,3 +114,35 @@ def calculate_health_score(account):
 
     score = 50 + (savings_rate * 40) - (spending_rate * 30)
     return int(max(0, min(score, 100)))
+
+#weekly income vs expenses
+@dashboard.route('/weekly-summary')
+@login_required
+def weekly_summary():
+    account = Account.query.filter_by(user_id=current_user.id).first()
+    if not account:
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    bm = BudgetManager(db.session, account.id)
+
+    today = date.today()
+    results = []
+
+    for i in range(4):
+        end = today - timedelta(days=i * 7)
+        start = end - timedelta(days=6)
+
+        weekly_expenses = sum(
+            s.amount for s in account.spendings
+            if start <= s.date <= end
+        )
+
+        weekly_income = bm.calculate_weekly_income()  # static weekly income
+        results.append({
+            'week': f"{start.strftime('%b %d')} - {end.strftime('%b %d')}",
+            'income': round(weekly_income, 2),
+            'expenses': round(weekly_expenses, 2)
+        })
+
+    results.reverse()  # Make oldest week come first
+    return jsonify(results)
