@@ -12,7 +12,12 @@ def get_or_create_account(user_id: int) -> Account:
     """return the user's single Account, creating an empty one if needed."""
     account = Account.query.filter_by(user_id=user_id).first()
     if account is None:
-        account = Account(user_id=user_id, weekly_spending_limit=0.0)
+        account = Account(
+            user_id=user_id, 
+            current_balance=0.0,        # Add default value for current_balance to meet the NOT NULL constraint
+            min_balance_goal=0.0,       # Add default value for min_balance_goal to meet the NOT NULL constraint
+            weekly_spending_limit=0.0,  # Add default value for weekly_spending_limit to meet the NOT NULL constraint
+        )
         db.session.add(account)
         db.session.flush()          # flush so row gets primary key without committing. Need this for FKs and for form to work.
     return account
