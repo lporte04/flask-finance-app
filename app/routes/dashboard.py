@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 import requests
 
-from flask import Blueprint, render_template, jsonify, request, redirect, url_for, flash
+from flask import Blueprint, render_template, jsonify, request, redirect, url_for, flash, session, current_app
 from flask_login import login_required, current_user
 
 # ---- UI-branch models & helpers ----
@@ -13,6 +13,8 @@ from app.forms import FinancialForm, SavingsDepositForm
 from app.services import account as account_svc
 from app.services import deposits as deposit_svc
 from app.services import dashboard_data as dashboard_svc
+from app.services import expense_processor as expense_svc
+from app.utilities.date_utils import get_effective_date
 from app import db
 
 dashboard = Blueprint("dashboard", __name__)
@@ -23,9 +25,15 @@ dashboard = Blueprint("dashboard", __name__)
 @dashboard.route("/dashboard")
 @login_required
 def view():
+    # Get the effective date (with any simulation offset)
+    effective_date = get_effective_date()
+
     # Get the account
     account = account_svc.get_or_create_account(current_user.id)
     
+    # Process any recurring expenses that should be added to spending records today
+    expense_svc.process_recurring_expenses(account, effective_date)
+
     # Get dashboard data using the service
     data = dashboard_svc.get_dashboard_data(account)
     
@@ -48,7 +56,8 @@ def view():
         form=finance_form,
         deposit_form=deposit_form,
         account_exists=bool(account.expenses or account.savings_goals),
-        today=date.today().strftime("%Y-%m-%d"),
+        today=effective_date.strftime("%Y-%m-%d"),
+        simulated_date=effective_date.strftime("%B-%d-%Y"),
     )
 
 
@@ -147,3 +156,30 @@ def weekly_summary():
     bm = BudgetManager(db.session, account.id)
     data = bm.get_weekly_summary(4)
     return jsonify(data)
+
+@dashboard.post("/dashboard/simulate_date")
+@login_required
+def simulate_date():
+    # Only allow admin users
+    if current_user.email != current_app.config['ADMIN_EMAIL']:
+        flash("Not authorized", "danger")
+        return redirect(url_for('.view'))
+        
+    days = int(request.form.get('days_offset', 0))
+    current_offset = session.get('date_simulation_offset', 0)
+    session['date_simulation_offset'] = current_offset + days
+    
+    flash(f"Simulated {days} days into the future", "info")
+    return redirect(url_for('.view'))
+
+@dashboard.post("/dashboard/reset_date")
+@login_required
+def reset_date():
+    # Only allow admin users
+    if current_user.email != current_app.config['ADMIN_EMAIL']:
+        flash("Not authorized", "danger")
+        return redirect(url_for('.view'))
+        
+    session.pop('date_simulation_offset', None)
+    flash("Reset to current date", "info")
+    return redirect(url_for('.view'))

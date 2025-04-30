@@ -30,6 +30,14 @@ def create_app(config_class=Config):
         from app.models import User # Has to be here to avoid circular import.
         return User.query.get(int(user_id))
     
+    # Add template globals. This is a way to make variables available in all templates without passing them explicitly.
+    # Also allows for use in jinja.
+    @app.context_processor
+    def inject_globals():
+        return {
+            'ADMIN_EMAIL': app.config['ADMIN_EMAIL']
+        }
+
     # Register blueprints
     from app.routes.main import main
     from app.routes.auth import auth
