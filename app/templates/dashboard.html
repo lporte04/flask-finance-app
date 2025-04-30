@@ -1,6 +1,367 @@
 {% extends '_layout.html' %}
-
 {% block title %}Dashboard{% endblock %}
-{% block body %}
 
+{% block body %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 mb-4">
+      <div class="card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center">
+            <h2>{{ current_user.name }}'s Dashboard</h2>
+            <button class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#financialModal">
+              {% if account_exists %}Edit{% else %}New{% endif %}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ────────────────────────────────────────────────────────── MODAL ── -->
+<div class="modal fade" id="financialModal" tabindex="-1"
+     aria-labelledby="financialModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="financialModalLabel">
+          {% if account_exists %}Edit{% else %}New{% endif %} Financial Information
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <form id="financial-form"
+            method="POST"
+            action="{{ url_for('dashboard.save_financial') }}">
+        {{ form.hidden_tag() }}
+
+        <div class="modal-body">
+          <!-- Tabs ---------------------------------------------------- -->
+          <ul class="nav nav-tabs" id="financeTabs" role="tablist">
+            <li class="nav-item">
+              <button class="nav-link active" id="account-tab"
+                      data-bs-toggle="tab" data-bs-target="#account"
+                      type="button" role="tab">Account</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="expenses-tab"
+                      data-bs-toggle="tab" data-bs-target="#expenses"
+                      type="button" role="tab">Expenses</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="goals-tab"
+                      data-bs-toggle="tab" data-bs-target="#goals"
+                      type="button" role="tab">Savings Goals</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="spending-tab"
+                      data-bs-toggle="tab" data-bs-target="#spending"
+                      type="button" role="tab">Spending</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="assets-tab"
+                      data-bs-toggle="tab" data-bs-target="#assets"
+                      type="button" role="tab">Assets</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" id="investments-tab"
+                      data-bs-toggle="tab" data-bs-target="#investments"
+                      type="button" role="tab">Investments</button>
+            </li>
+            <li class="nav-item ms-auto">
+              <button class="nav-link" id="deposit-tab"
+                      data-bs-toggle="tab" data-bs-target="#deposit"
+                      type="button" role="tab">Make a Deposit</button>
+            </li>
+          </ul>
+
+          <div class="tab-content mt-3">
+            <!-- Account ------------------------------------------------ -->
+            <div class="tab-pane fade show active" id="account" role="tabpanel">
+              {{ render_field(form.current_balance) }}
+              {{ render_field(form.min_balance_goal) }}
+              {{ render_field(form.hourly_wage) }}
+              {{ render_field(form.hours_per_week) }}
+            </div>
+
+            <!-- Expenses ---------------------------------------------- -->
+            <div class="tab-pane fade" id="expenses" role="tabpanel">
+              <table class="table" id="expenses-table">
+                <thead><tr><th>Expense</th><th>Amount</th><th>Frequency</th><th></th></tr></thead>
+                <tbody>
+                  {% for entry in form.expenses %}
+                  <tr>
+                    {{ entry.form.id }}
+                    <td>{{ entry.form.name(class="form-control") }}</td>
+                    <td>{{ entry.form.amount(class="form-control") }}</td>
+                    <td>{{ entry.form.frequency(class="form-select") }}</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-danger"
+                              onclick="removeRow(this,'expenses-table','expenses')">−</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <button type="button" class="btn btn-outline-secondary"
+                      id="add-expense">Add expense</button>
+            </div>
+
+            <!-- Goals -------------------------------------------------- -->
+            <div class="tab-pane fade" id="goals" role="tabpanel">
+              <table class="table" id="goals-table">
+                <thead><tr><th>Goal</th><th>Cost</th><th></th></tr></thead>
+                <tbody>
+                  {% for entry in form.goals %}
+                  <tr>
+                    {{ entry.form.id }}
+                    <td>{{ entry.form.item(class="form-control") }}</td>
+                    <td>{{ entry.form.cost(class="form-control") }}</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-danger"
+                              onclick="removeRow(this,'goals-table','goals')">−</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <button type="button" class="btn btn-outline-secondary"
+                      id="add-goal">Add goal</button>
+            </div>
+
+            <!-- Spending ---------------------------------------------- -->
+            <div class="tab-pane fade" id="spending" role="tabpanel">
+              <table class="table" id="spending-table">
+                <thead><tr><th>Item</th><th>Amount</th><th>Date</th><th></th></tr></thead>
+                <tbody>
+                  {% for entry in form.spendings %}
+                  <tr>
+                    {{ entry.form.id }}
+                    <td>{{ entry.form.item(class="form-control") }}</td>
+                    <td>{{ entry.form.amount(class="form-control") }}</td>
+                    <td>{{ entry.form.date(class="form-control") }}</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-danger"
+                              onclick="removeRow(this,'spending-table','spendings')">−</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <button type="button" class="btn btn-outline-secondary"
+                      id="add-spending">Add spending</button>
+            </div>
+
+            <!-- Assets Tab -->
+            <div class="tab-pane fade" id="assets" role="tabpanel">
+              <table class="table" id="assets-table">
+                <thead><tr><th>Asset Name</th><th>Value</th><th></th></tr></thead>
+                <tbody>
+                  {% for entry in form.assets %}
+                  <tr>
+                    {{ entry.form.id }}
+                    <td>{{ entry.form.name(class="form-control") }}</td>
+                    <td>{{ entry.form.value(class="form-control") }}</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-danger"
+                              onclick="removeRow(this,'assets-table','assets')">−</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <button type="button" class="btn btn-outline-secondary"
+                      id="add-asset">Add asset</button>
+            </div>
+            
+            <!-- Investments Tab -->
+            <div class="tab-pane fade" id="investments" role="tabpanel">
+              <table class="table" id="investments-table">
+                <thead><tr><th>Stock Name</th><th>Amount Invested</th><th></th></tr></thead>
+                <tbody>
+                  {% for entry in form.investments %}
+                  <tr>
+                    {{ entry.form.id }}
+                    <td>{{ entry.form.stock_name(class="form-control") }}</td>
+                    <td>{{ entry.form.amount(class="form-control") }}</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-danger"
+                              onclick="removeRow(this,'investments-table','investments')">−</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <button type="button" class="btn btn-outline-secondary"
+                      id="add-investment">Add investment</button>
+            </div>
+
+            </form> <!-- Close the financial form here -->
+            
+            <!-- Deposit Tab - properly placed in tab-content -->
+            <div class="tab-pane fade" id="deposit" role="tabpanel">
+              <form id="deposit-form" method="POST" action="{{ url_for('dashboard.save_deposit') }}" class="mt-3">
+                {{ deposit_form.csrf_token }}
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="{{ deposit_form.goal_id.id }}" class="form-label">{{ deposit_form.goal_id.label.text }}</label>
+                      {{ deposit_form.goal_id(class="form-select") }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="{{ deposit_form.amount.id }}" class="form-label">{{ deposit_form.amount.label.text }}</label>
+                      {{ deposit_form.amount(class="form-control", placeholder="0.00") }}
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="mb-3">
+                  <label class="form-label">Date</label>
+                  <div class="form-control bg-light" readonly>{{ today }}</div>
+                  <div class="form-text text-muted">Deposits are automatically dated for today</div>
+                </div>
+              </form>
+            </div>
+          </div><!-- /.tab-content -->
+        </div><!-- /.modal-body -->
+      
+      <!-- Modal footer outside both forms -->
+      <div class="modal-footer">
+        <button type="submit" form="financial-form" class="btn btn-primary" id="save-button">
+          {{ form.submit.label.text }}
+        </button>
+        <button type="submit" form="deposit-form" class="btn btn-primary" id="deposit-button" style="display:none">
+          {{ deposit_form.submit.label.text }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─────────────────────────────────────────────── JS helpers ── -->
+<script>
+    /* ───────── helpers ───────── */
+function renumber(tableId, prefix){
+  document.querySelectorAll(`#${tableId} tbody tr`).forEach((row, i) => {
+    row.querySelectorAll('input,select').forEach(el => {
+      el.name = el.name.replace(new RegExp(`^${prefix}-\\d+-`), `${prefix}-${i}-`);
+    });
+  });
+}
+
+function removeRow(btn, tableId, prefix){
+  btn.closest('tr').remove();
+  renumber(tableId, prefix);
+}
+
+function setupAddRow(buttonId, tableId, prefix, templateFn){
+  const btn = document.getElementById(buttonId);
+  if(!btn) return;
+
+  btn.addEventListener('click', ()=>{
+    const tbody = document.querySelector(`#${tableId} tbody`);
+    const newIndex = tbody.querySelectorAll('tr').length;
+    tbody.insertAdjacentHTML('beforeend', templateFn(newIndex));
+  });
+}
+
+/* ───────── row templates ───────── */
+function expenseTemplate(i){
+  return `<tr>
+    <td><input type="hidden" name="expenses-${i}-id">
+        <input name="expenses-${i}-name"   class="form-control" required></td>
+    <td><input name="expenses-${i}-amount" class="form-control" type="number" step="0.01" required></td>
+    <td><select name="expenses-${i}-frequency" class="form-select" required>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+        </select></td>
+    <td><button type="button" class="btn btn-sm btn-danger"
+                onclick="removeRow(this,'expenses-table','expenses')">−</button></td>
+  </tr>`;
+}
+
+function goalTemplate(i){
+  return `<tr>
+    <td><input type="hidden" name="goals-${i}-id">
+        <input name="goals-${i}-item" class="form-control" required></td>
+    <td><input name="goals-${i}-cost" class="form-control" type="number" step="0.01" required></td>
+    <td><button type="button" class="btn btn-sm btn-danger"
+                onclick="removeRow(this,'goals-table','goals')">−</button></td>
+  </tr>`;
+}
+
+function spendingTemplate(i){
+  const today = new Date().toISOString().split('T')[0];
+  return `<tr>
+    <td><input type="hidden" name="spendings-${i}-id">
+        <input name="spendings-${i}-item" class="form-control" required></td>
+    <td><input name="spendings-${i}-amount" class="form-control" type="number" step="0.01" required></td>
+    <td><input name="spendings-${i}-date" class="form-control" type="date" value="${today}" required></td>
+    <td><button type="button" class="btn btn-sm btn-danger"
+                onclick="removeRow(this,'spending-table','spendings')">−</button></td>
+  </tr>`;
+}
+
+function assetTemplate(i){
+  return `<tr>
+    <td><input type="hidden" name="assets-${i}-id">
+        <input name="assets-${i}-name" class="form-control" required></td>
+    <td><input name="assets-${i}-value" class="form-control" type="number" step="0.01" required></td>
+    <td><button type="button" class="btn btn-sm btn-danger"
+                onclick="removeRow(this,'assets-table','assets')">−</button></td>
+  </tr>`;
+}
+
+function investmentTemplate(i){
+  return `<tr>
+    <td><input type="hidden" name="investments-${i}-id">
+        <input name="investments-${i}-stock_name" class="form-control" required></td>
+    <td><input name="investments-${i}-amount" class="form-control" type="number" step="0.01" required></td>
+    <td><button type="button" class="btn btn-sm btn-danger"
+                onclick="removeRow(this,'investments-table','investments')">−</button></td>
+  </tr>`;
+}
+
+/* wire-up */
+setupAddRow('add-expense',  'expenses-table',  'expenses',  expenseTemplate);
+setupAddRow('add-goal',     'goals-table',     'goals',     goalTemplate);
+setupAddRow('add-spending', 'spending-table',  'spendings', spendingTemplate);
+setupAddRow('add-asset', 'assets-table', 'assets', assetTemplate);
+setupAddRow('add-investment', 'investments-table', 'investments', investmentTemplate);
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Renumber all tables on page load to ensure proper indexes
+  renumber('expenses-table', 'expenses');
+  renumber('goals-table', 'goals');
+  renumber('spending-table', 'spendings');
+  renumber('assets-table', 'assets');
+  renumber('investments-table', 'investments');
+
+  // Debug output to console
+  console.log("Tables renumbered on page load");
+
+  // Handle tab switching to show/hide appropriate buttons
+  document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+    tab.addEventListener('shown.bs.tab', function(event) {
+      const targetId = event.target.getAttribute('data-bs-target');
+      
+      if (targetId === '#deposit') {
+        // Show deposit button, hide save button for deposit tab
+        document.getElementById('save-button').style.display = 'none';
+        document.getElementById('deposit-button').style.display = 'block';
+      } else {
+        // Show save button, hide deposit button for all other tabs
+        document.getElementById('save-button').style.display = 'block';
+        document.getElementById('deposit-button').style.display = 'none';
+      }
+    });
+  });
+});
+</script>
 {% endblock %}
