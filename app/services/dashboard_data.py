@@ -14,12 +14,15 @@ def get_dashboard_data(account):
     # calculate metrics
     net_worth = bm.calculate_net_worth()
     health_score = bm.calculate_health_score()
+
+    # sort spendings by date (newest first)
+    sorted_spendings = sorted(account.spendings, key=lambda s: s.date, reverse=True)
     
     return {
         'net_worth': net_worth,
         'assets': assets,
         'investments': account.investments,
-        'spendings': account.spendings,
+        'spendings': sorted_spendings,
         'savings_goals': account.savings_goals,
         'health_score': health_score,
         'weekly_summary': bm.get_weekly_summary(4)
