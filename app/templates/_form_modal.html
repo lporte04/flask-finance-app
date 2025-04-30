@@ -1,0 +1,236 @@
+<!-- 
+  "FINANCIAL FORM" MODAL
+   - partial goes into dashboard template with jinja containing
+         % include '_form_modal.html' %
+   - load the JS helpers in that page:
+         <script src="{{ url_for('static', filename='js/form_modal.js') }}"></script>
+   - Nothing here depends on <body> / layout classes.
+-->
+
+<!-- form "launch" button  -->
+<button class="btn btn-primary"
+        data-bs-toggle="modal"
+        data-bs-target="#financialModal">
+  {% if account_exists %}Edit{% else %}New{% endif %}
+</button>
+
+<!--  MODAL  -->
+<div class="modal fade" id="financialModal" tabindex="-1"
+     aria-labelledby="financialModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title" id="financialModalLabel">
+          {% if account_exists %}Edit{% else %}New{% endif %} Financial Information
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!-- Main form (for populating DB with user data) -->
+      <form id="financial-form"
+            method="POST"
+            action="{{ url_for('dashboard.save_financial') }}">
+        {{ form.hidden_tag() }}
+
+        <div class="modal-body">
+
+          <!-- Tabs strip -->
+          <ul class="nav nav-tabs" id="financeTabs" role="tablist">
+            {% for tab in [
+                ('account', 'Account'),
+                ('expenses', 'Expenses'),
+                ('goals', 'Savings Goals'),
+                ('spending', 'Spending'),
+                ('assets', 'Assets'),
+                ('investments', 'Investments')
+              ] %}
+              <li class="nav-item">
+                <button class="nav-link {% if loop.first %}active{% endif %}"
+                        id="{{ tab[0] }}-tab"
+                        data-bs-toggle="tab"
+                        data-bs-target="#{{ tab[0] }}"
+                        type="button" role="tab">{{ tab[1] }}</button>
+              </li>
+            {% endfor %}
+            <li class="nav-item ms-auto">
+              <button class="nav-link" id="deposit-tab"
+                      data-bs-toggle="tab" data-bs-target="#deposit"
+                      type="button" role="tab">Make a Deposit</button>
+            </li>
+          </ul>
+
+          <!-- Tab panes -->
+          <div class="tab-content mt-3">
+
+            <!-- Account  -->
+            <div class="tab-pane fade show active" id="account" role="tabpanel">
+              {{ render_field(form.current_balance) }}
+              {{ render_field(form.min_balance_goal) }}
+              {{ render_field(form.hourly_wage) }}
+              {{ render_field(form.hours_per_week) }}
+            </div>
+
+            <!-- Expenses  -->
+            <div class="tab-pane fade" id="expenses" role="tabpanel">
+              <table class="table" id="expenses-table">
+                <thead><tr><th>Expense</th><th>Amount</th><th>Frequency</th><th></th></tr></thead>
+                <tbody>
+                  {% for entry in form.expenses %}
+                  <tr>
+                    {{ entry.form.id }}
+                    <td>{{ entry.form.name(class="form-control") }}</td>
+                    <td>{{ entry.form.amount(class="form-control") }}</td>
+                    <td>{{ entry.form.frequency(class="form-select") }}</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-danger"
+                              onclick="removeRow(this,'expenses-table','expenses')">×</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <button type="button" class="btn btn-outline-secondary"
+                      id="add-expense">Add expense</button>
+            </div>
+
+            <!-- Goals  -->
+            <div class="tab-pane fade" id="goals" role="tabpanel">
+              <table class="table" id="goals-table">
+                <thead><tr><th>Goal</th><th>Cost</th><th></th></tr></thead>
+                <tbody>
+                  {% for entry in form.goals %}
+                  <tr>
+                    {{ entry.form.id }}
+                    <td>{{ entry.form.item(class="form-control") }}</td>
+                    <td>{{ entry.form.cost(class="form-control") }}</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-danger"
+                              onclick="removeRow(this,'goals-table','goals')">×</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <button type="button" class="btn btn-outline-secondary"
+                      id="add-goal">Add goal</button>
+            </div>
+
+            <!-- Spending  -->
+            <div class="tab-pane fade" id="spending" role="tabpanel">
+              <table class="table" id="spendings-table">
+                <thead><tr><th>Item</th><th>Amount</th><th>Date</th><th></th></tr></thead>
+                <tbody>
+                  {% for entry in form.spendings %}
+                  <tr>
+                    {{ entry.form.id }}
+                    <td>{{ entry.form.item(class="form-control") }}</td>
+                    <td>{{ entry.form.amount(class="form-control") }}</td>
+                    <td>{{ entry.form.date(class="form-control") }}</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-danger"
+                              onclick="removeRow(this,'spendings-table','spendings')">×</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <button type="button" class="btn btn-outline-secondary"
+                      id="add-spending">Add spending</button>
+            </div>
+
+            <!-- Assets  -->
+            <div class="tab-pane fade" id="assets" role="tabpanel">
+              <table class="table" id="assets-table">
+                <thead><tr><th>Asset Name</th><th>Value</th><th></th></tr></thead>
+                <tbody>
+                  {% for entry in form.assets %}
+                  <tr>
+                    {{ entry.form.id }}
+                    <td>{{ entry.form.name(class="form-control") }}</td>
+                    <td>{{ entry.form.value(class="form-control") }}</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-danger"
+                              onclick="removeRow(this,'assets-table','assets')">×</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <button type="button" class="btn btn-outline-secondary"
+                      id="add-asset">Add asset</button>
+            </div>
+
+            <!-- Investments  -->
+            <div class="tab-pane fade" id="investments" role="tabpanel">
+              <table class="table" id="investments-table">
+                <thead><tr><th>Stock Name</th><th>Amount Invested</th><th></th></tr></thead>
+                <tbody>
+                  {% for entry in form.investments %}
+                  <tr>
+                    {{ entry.form.id }}
+                    <td>{{ entry.form.stock_name(class="form-control") }}</td>
+                    <td>{{ entry.form.amount(class="form-control") }}</td>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-danger"
+                              onclick="removeRow(this,'investments-table','investments')">×</button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              <button type="button" class="btn btn-outline-secondary"
+                      id="add-investment">Add investment</button>
+            </div>
+
+          </form> {# closes #financial-form #}
+
+            <!-- Deposit (separate form)  -->
+            <div class="tab-pane fade" id="deposit" role="tabpanel">
+              <form id="deposit-form" class="mt-3"
+                    method="POST" action="{{ url_for('dashboard.save_deposit') }}">
+                {{ deposit_form.csrf_token }}
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="{{ deposit_form.goal_id.id }}" class="form-label">
+                        {{ deposit_form.goal_id.label.text }}
+                      </label>
+                      {{ deposit_form.goal_id(class="form-select") }}
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label for="{{ deposit_form.amount.id }}" class="form-label">
+                        {{ deposit_form.amount.label.text }}
+                      </label>
+                      {{ deposit_form.amount(class="form-control", placeholder="0.00") }}
+                    </div>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Date</label>
+                  <div class="form-control bg-light" readonly>{{ today }}</div>
+                  <div class="form-text text-muted">Deposits are automatically dated for today</div>
+                </div>
+              </form>
+            </div> <!-- /deposit tab -->
+
+          </div> <!-- /.tab-content -->
+        </div> <!-- /.modal-body -->
+
+        <!-- Footer with two submit buttons  -->
+        <div class="modal-footer">
+          <button type="submit" form="financial-form" class="btn btn-primary" id="save-button">
+            {{ form.submit.label.text }}
+          </button>
+          <button type="submit" form="deposit-form" class="btn btn-primary" id="deposit-button" style="display:none">
+            {{ deposit_form.submit.label.text }}
+          </button>
+        </div>
+
+      </div> {# /.modal-content #}
+    </div>
+  </div>
+</div>

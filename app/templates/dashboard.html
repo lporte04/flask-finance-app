@@ -1,8 +1,7 @@
 {% extends '_layout.html' %}
-
 {% block title %}Dashboard{% endblock %}
-{% block body %}
 
+{% block body %}
 <style>
     body {
         margin: 0;
@@ -257,9 +256,12 @@
     </div>
 
 </div>
+{% include '_form_modal.html' %}
+{% endblock %}
 
-<!-- Script for chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% block scripts %}
+  {{ super() }}  <!-- Include Bootstrap JS for modal functionality -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     // Donut chart for net_worth
     var ctx = document.getElementById('netWorthDonutChart').getContext('2d');
@@ -532,4 +534,6 @@ if (stockSymbols.length > 0) {
 
 </script>
 
+
+  <script src="{{ url_for('static', filename='scripts/form_modal.js') }}"></script>
 {% endblock %}
