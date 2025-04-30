@@ -12,6 +12,7 @@ from app.calculations import BudgetManager
 from app.forms import FinancialForm, SavingsDepositForm
 from app.services import account as account_svc
 from app.services import deposits as deposit_svc
+from app.services import dashboard_data as dashboard_svc
 from app import db
 
 dashboard = Blueprint("dashboard", __name__)
@@ -22,43 +23,28 @@ dashboard = Blueprint("dashboard", __name__)
 @dashboard.route("/dashboard")
 @login_required
 def view():
-    # get the account
+    # Get the account
     account = account_svc.get_or_create_account(current_user.id)
-
-    assets = (
-        [{'name': 'Cash Balance', 'value': account.current_balance}]
-        + [{'name': a.name, 'value': a.value} for a in account.assets]
-    )
-
-    investments   = account.investments
-    spendings     = account.spendings
-    savings_goals = account.savings_goals
-
-    total_assets       = account.current_balance + sum(a.value for a in account.assets)
-    total_investments  = sum(inv.amount for inv in investments)
-    total_spending     = sum(s.amount for s in spendings)
-    net_worth          = total_assets + total_investments - total_spending
-    health_score       = calculate_health_score(account)
-
-    # ----- modal forms -----
-    finance_form     = FinancialForm(obj=account)
+    
+    # Get dashboard data using the service
+    data = dashboard_svc.get_dashboard_data(account)
+    
+    # Set up forms
+    finance_form = FinancialForm(obj=account)
     deposit_form = SavingsDepositForm()
     account_svc.prefill_financial_form(finance_form, account)
-    deposit_form.goal_id.choices = [
-        (g.id, f"{g.item} (${g.cost - g.current_amount:.2f} remaining)")
-        for g in savings_goals
-    ]
-
+    
+    if data['savings_goals']:
+        deposit_form.goal_id.choices = [
+            (g.id, f"{g.item} (${g.cost - g.current_amount:.2f} remaining)")
+            for g in data['savings_goals']
+        ]
+    
     return render_template(
         "dashboard.html",
-        # visual data
-        net_worth=net_worth,
-        assets=assets,
-        investments=investments,
-        spendings=spendings,
-        savings_goals=savings_goals,
-        health_score=health_score,
-        # modal data
+        # Pass all dashboard data
+        **data,
+        # Modal data
         form=finance_form,
         deposit_form=deposit_form,
         account_exists=bool(account.expenses or account.savings_goals),
@@ -156,45 +142,8 @@ def multi_stock_history():
 @dashboard.route('/weekly-summary')
 @login_required
 def weekly_summary():
-    account = Account.query.filter_by(user_id=current_user.id).first()
-    if not account:
-        return jsonify({'error': 'Unauthorized'}), 403
-
+    account = account_svc.get_or_create_account(current_user.id)
+        
     bm = BudgetManager(db.session, account.id)
-
-    today = date.today()
-    results = []
-
-    for i in range(4):
-        end = today - timedelta(days=i * 7)
-        start = end - timedelta(days=6)
-
-        weekly_expenses = sum(
-            s.amount for s in account.spendings
-            if start <= s.date <= end
-        )
-
-        weekly_income = bm.calculate_weekly_income()  # static weekly income
-        results.append({
-            'week': f"{start.strftime('%b %d')} - {end.strftime('%b %d')}",
-            'income': round(weekly_income, 2),
-            'expenses': round(weekly_expenses, 2)
-        })
-
-    results.reverse()  # Make oldest week come first
-    return jsonify(results)
-
-#health score helper
-def calculate_health_score(account):
-    income = (account.hourly_wage or 0) * (account.hours_per_week or 0) * 4  # approx monthly income
-    spending = sum(s.amount or 0 for s in account.spendings)
-    savings = sum(goal.current_amount for goal in account.savings_goals)
-
-    if income == 0:
-        return 50  # Neutral default
-
-    savings_rate = savings / income if income else 0
-    spending_rate = spending / income if income else 0
-
-    score = 50 + (savings_rate * 40) - (spending_rate * 30)
-    return int(max(0, min(score, 100)))
+    data = bm.get_weekly_summary(4)
+    return jsonify(data)

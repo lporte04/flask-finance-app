@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from sqlalchemy.orm import Session
 from app.models import User, Account, RecurringExpense, Spending, SavingsGoal, SavingsDeposit
 
@@ -153,3 +153,48 @@ class BudgetManager:
         self.db.delete(goal)
 
         self.db.commit()
+
+    def calculate_net_worth(self) -> float:
+        """Calculate user's total net worth"""
+        total_assets = self.account.current_balance + sum(a.value for a in self.account.assets)
+        total_investments = sum(inv.amount for inv in self.account.investments)
+        total_spending = sum(s.amount for s in self.account.spendings)
+        return total_assets + total_investments - total_spending
+    
+    def calculate_health_score(self) -> int:
+        """Calculate financial health score (0-100)"""
+        income = (self.account.hourly_wage or 0) * (self.account.hours_per_week or 0) * 4
+        spending = sum(s.amount or 0 for s in self.account.spendings)
+        savings = sum(goal.current_amount for goal in self.account.savings_goals)
+        
+        if income == 0:
+            return 50  # Neutral default
+        
+        savings_rate = savings / income if income else 0
+        spending_rate = spending / income if income else 0
+        
+        score = 50 + (savings_rate * 40) - (spending_rate * 30)
+        return int(max(0, min(score, 100)))
+    
+    def get_weekly_summary(self, weeks=4) -> list:
+        """Get weekly income vs expenses for the past several weeks"""
+        today = date.today()
+        results = []
+        
+        for i in range(weeks):
+            end = today - timedelta(days=i * 7)
+            start = end - timedelta(days=6)
+            
+            weekly_expenses = sum(
+                s.amount for s in self.account.spendings
+                if start <= s.date <= end
+            )
+            
+            weekly_income = self.calculate_weekly_income()
+            results.append({
+                'week': f"{start.strftime('%b %d')} - {end.strftime('%b %d')}",
+                'income': round(weekly_income, 2),
+                'expenses': round(weekly_expenses, 2)
+            })
+        
+        return list(reversed(results))  # Make oldest week come first
