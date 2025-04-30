@@ -19,11 +19,11 @@ class Account(db.Model):
     hourly_wage = db.Column(db.Float, nullable=True)
     hours_per_week = db.Column(db.Float, nullable=True)
 
-    expenses = db.relationship('RecurringExpense', backref='account', lazy=True)
-    spendings = db.relationship('Spending', backref='account', lazy=True)
-    savings_goals = db.relationship('SavingsGoal', backref='account', lazy=True)
-    investments = db.relationship('Investment', backref='account', lazy=True)
-    assets = db.relationship('Asset', backref='account', lazy=True)
+    expenses = db.relationship('RecurringExpense', backref='account', lazy=True, cascade='all, delete-orphan')
+    spendings = db.relationship('Spending', backref='account', lazy=True, cascade='all, delete-orphan')
+    savings_goals = db.relationship('SavingsGoal', backref='account', lazy=True, cascade='all, delete-orphan')
+    investments = db.relationship('Investment', backref='account', lazy=True, cascade='all, delete-orphan')
+    assets = db.relationship('Asset', backref='account', lazy=True, cascade='all, delete-orphan')
 
 class RecurringExpense(db.Model): # This is a class to store recurring expenses like rent, subscriptions, etc.
     id = db.Column(db.Integer, primary_key=True)
@@ -58,6 +58,13 @@ class SavingsGoal(db.Model): # Let the user set a savings goal for a specific it
     @property
     def is_funded(self):
         return self.current_amount >= self.cost
+    
+    #new property to assist in the savings progress bar-sam
+    @property
+    def progress_percent(self):
+        if not self.cost:
+            return 0
+        return min(100, (self.current_amount / self.cost) * 100)
 
 class SavingsDeposit(db.Model):
     id = db.Column(db.Integer, primary_key=True)

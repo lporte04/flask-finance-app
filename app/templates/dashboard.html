@@ -1,6 +1,404 @@
 {% extends '_layout.html' %}
-
 {% block title %}Dashboard{% endblock %}
-{% block body %}
 
+{% block body %}
+<link rel="stylesheet" href="{{ url_for('static', filename='styles/dashboard.css') }}">
+
+<!-- page header -->
+<div class="page-header d-flex justify-content-between align-items-center mb-0">
+    <h1 class="fs-3 fw-semibold m-0">Dashboard</h1>
+  
+    <button class="btn btn-primary"
+            data-bs-toggle="modal"
+            data-bs-target="#financialModal">
+      {% if account_exists %}Edit{% else %}New{% endif %}
+    </button>
+  </div>
+
+<div class="dashboard">
+
+    <!-- Column 1: Net Worth -->
+    <div class="column">
+        <div class="module height-25 net-worth-box">
+            <h2>Your Estimated Net Worth</h2>
+            <p class="net-worth-value">${{ net_worth }}</p>
+        </div>
+        <div class="module height-75 fill">
+            <h2>Asset Distribution</h2>
+            <canvas id="netWorthDonutChart"></canvas>
+            <h2>Assets</h2>
+            <ul>
+                {% for asset in assets %}
+                    <li>{{ asset.name }}: ${{ asset.value }}</li>
+                {% else %}
+                    <li>No assets added yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- Column 2: Spending -->
+    <div class="column">
+        <div class="module height-50">
+            <h2>Spending Activity</h2>
+            <ul>
+                {% for s in spendings %}
+                    <li class="spending-item">
+                        <div class="spending-details">
+                            <span class="spending-item-name">{{ s.item }}</span>
+                            <span class="spending-amount">${{ s.amount }}</span>
+                        </div>
+                        <span class="spending-date">{{ s.date }}</span>
+                    </li>
+                {% else %}
+                    <li>No spending records yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="module height-50">
+            <h2>Income vs Expense</h2>
+                <canvas id="incomeVsExpenseChart"></canvas>
+        </div>
+    </div>
+    <!-- Column 3 Savings-->
+    <div class="column">
+        <div class="module height-50">
+            <h2>Savings Goals</h2>
+            {% if savings_goals %}
+        <ul>
+        {% for goal in savings_goals %}
+            <li style="margin-bottom: 15px;">
+                <strong>{{ goal.item }}</strong>: ${{ goal.current_amount }} / ${{ goal.cost }}
+                <div class="progress-container">
+                    <div class="progress-bar 
+                        {% if goal.progress_percent < 50 %}low
+                        {% elif goal.progress_percent < 80 %}medium
+                        {% else %}high
+                        {% endif %}"
+                        style="width: {{ goal.progress_percent }}%;">
+                        {{ goal.progress_percent | round(0) }}%
+                </div>               
+                {% if goal.is_funded %}
+                    <span style="color: green;">Goal reached! 🎉</span>
+                {% endif %}
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No savings goals added yet.</p>
+    {% endif %}
+        </div>
+        
+        <div class="module height-50 health-score-module">
+            <h2>Financial Health Score</h2>
+            <canvas id="healthGauge"></canvas>
+            <p style="text-align: center; font-size: 18px; margin-top: 10px;">
+                Score: <strong>{{ health_score }}</strong>/100
+            </p>
+        </div>
+    </div>
+
+    <!-- Column 4: Investments -->
+    <div class="column">
+        <div class="module height-40">
+            <h2>Investment Trends</h2>
+            <canvas id="investmentLineChart"></canvas>
+        </div>
+        
+        <div class="module height-60">
+            <h2>Investment Allocation</h2>
+            <canvas id="investmentDonutChart"></canvas>
+            <h2>Investments</h2>
+            <ul>
+                {% for inv in investments %}
+                    <li>{{ inv.stock_name }}: ${{ inv.amount or 'N/A' }}</li>
+                {% else %}
+                    <li>No investments added yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+</div>
+{% include '_form_modal.html' %}
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}  <!-- Include Bootstrap JS for modal functionality -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Donut chart for net_worth
+    var ctx = document.getElementById('netWorthDonutChart').getContext('2d');
+
+    var labels = [{% for asset in assets %}"{{ asset.name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+    var data = [{% for asset in assets %}{{ asset.value }}{% if not loop.last %}, {% endif %}{% endfor %}];
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: ['#003300', '#006600', '#009933', '#33cc33', '#99ff99'],
+            }]
+        }
+    });
+    
+
+
+    // Donut chart for investments
+    var ctx2 = document.getElementById('investmentDonutChart').getContext('2d');
+
+    var investmentLabels = [{% for inv in investments %}"{{ inv.stock_name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+    var investmentAmounts = [{% for inv in investments %}{{ inv.amount or 0 }}{% if not loop.last %}, {% endif %}{% endfor %}];
+
+    new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+            labels: investmentLabels,
+            datasets: [{
+                data: investmentAmounts,
+                backgroundColor: ['#003300', '#006600', '#009933', '#33cc33', '#99ff99'],
+            }]
+        }
+    });
+    //financial health gauge
+    const healthGauge = document.getElementById('healthGauge').getContext('2d');
+
+    const score = {{ health_score | default(0) }};
+    const remaining = 100 - score;
+
+    let backgroundColor = [];
+    // Set color based on the score
+    if (score <= 30) {
+        backgroundColor = ['#ff5f5f', '#e0e0e0']; // Red for low score
+    } else if (score <= 70) {
+        backgroundColor = ['#ffbf00', '#e0e0e0']; // Yellow for medium score
+    } else {
+        backgroundColor = ['#4caf50', '#e0e0e0']; // Green for high score
+    }
+
+    new Chart(healthGauge, {
+        type: 'doughnut',
+        data: {
+            datasets: [{
+                data: [score, remaining],
+                backgroundColor: backgroundColor,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            rotation: -90,
+            circumference: 180,
+            cutout: '80%',
+            plugins: {
+                legend: { display: false },
+                tooltip: { enabled: false }
+            }
+        }
+    });
+
+    // Investment history line chart
+async function renderMultiStockChart(symbols) {
+    const response = await fetch('/stock-history?' + symbols.map(s => `symbol=${s}`).join('&'));
+    const data = await response.json();
+
+    const colors = ['#003300', '#006600', '#009933', '#33cc33', '#99ff99'];
+    const datasets = [];
+
+    // Process the stock data for monthly aggregation
+    symbols.forEach((symbol, index) => {
+        const stockData = data[symbol] || [];
+        
+        // Aggregate daily data into monthly data
+        const monthlyData = [];
+        let currentMonth = '';
+        let monthData = [];
+
+        stockData.forEach((entry) => {
+            const date = new Date(entry.date);
+            const month = `${date.getFullYear()}-${date.getMonth() + 1}`;  // Format: YYYY-MM
+
+            // If it's the same month, collect the data
+            if (month === currentMonth) {
+                monthData.push(entry.close);
+            } else {
+                // If we moved to a new month, push the previous month's data (use the last price for that month)
+                if (currentMonth) {
+                    const monthClose = monthData[monthData.length - 1];  // Use the last closing price for the month
+                    monthlyData.push({ date: currentMonth, close: monthClose });
+                }
+                // Start a new month
+                currentMonth = month;
+                monthData = [entry.close];
+            }
+        });
+
+        // Push the last month's data
+        if (monthData.length > 0) {
+            const monthClose = monthData[monthData.length - 1];  // Use the last closing price for the month
+            monthlyData.push({ date: currentMonth, close: monthClose });
+        }
+
+        // Create the dataset for the chart
+        datasets.push({
+            label: symbol,
+            data: monthlyData.map(d => d.close), // Only use the closing price
+            borderColor: colors[index % colors.length],
+            fill: false,
+            tension: 0.1
+        });
+    });
+
+    const ctx5 = document.getElementById('investmentLineChart').getContext('2d');
+
+    // Prepare the labels (months)
+    const labels = datasets.length > 0 && datasets[0].data.length > 0 
+        ? datasets[0].data.map((_, i) => datasets[0].data[i].date)
+        : [];
+
+    new Chart(ctx5, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    top: 20,
+                    bottom: 10
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            },
+            interaction: {
+                mode: 'nearest',
+                axis: 'x',
+                intersect: false
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month',
+                        font: {
+                            size: 14
+                        }
+                    },
+                    ticks: {
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: false,
+                    title: {
+                        display: true,
+                        text: 'Price ($)',
+                        font: {
+                            size: 16
+                        }
+                    },
+                    ticks: {
+                        font: {
+                            size: 14
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Auto-load all user's stock investments
+const stockSymbols = [{% for inv in investments %}"{{ inv.stock_name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+if (stockSymbols.length > 0) {
+    renderMultiStockChart(stockSymbols);
+}
+
+    //income vs expenses chart
+    fetch('/weekly-summary')
+    .then(response => response.json())
+    .then(data => {
+        const labels = data.map(item => item.week);
+        const incomes = data.map(item => item.income);
+        const expenses = data.map(item => item.expenses);
+
+        const ctx = document.getElementById('incomeVsExpenseChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Income',
+                        data: incomes,
+                        backgroundColor: '#2ecc71'
+                    },
+                    {
+                        label: 'Expenses',
+                        data: expenses,
+                        backgroundColor: '#e74c3c'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        top: 20,
+                        bottom: 10
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            font: { size: 14 }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Amount ($)',
+                            font: { size: 16 }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 12 }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Week',
+                            font: { size: 14 }
+                        }
+                    }
+                }
+            }
+        });
+    });
+    
+
+</script>
+
+
+  <script src="{{ url_for('static', filename='scripts/form_modal.js') }}"></script>
 {% endblock %}
