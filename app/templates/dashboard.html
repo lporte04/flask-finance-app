@@ -15,6 +15,32 @@
     </button>
   </div>
 
+{% if current_user.email == ADMIN_EMAIL %}
+<div class="admin-controls alert alert-warning mt-3 mb-0">
+    <h6 class="mb-2">Admin Time Controls</h6>
+    <div class="d-flex gap-2">
+        <form action="{{ url_for('dashboard.simulate_date') }}" method="POST" class="d-inline">
+            <input type="hidden" name="days_offset" value="1">
+            <button type="submit" class="btn btn-sm btn-outline-dark">+1 Day</button>
+        </form>
+        <form action="{{ url_for('dashboard.simulate_date') }}" method="POST" class="d-inline">
+            <input type="hidden" name="days_offset" value="7">
+            <button type="submit" class="btn btn-sm btn-outline-dark">+1 Week</button>
+        </form>
+        <form action="{{ url_for('dashboard.simulate_date') }}" method="POST" class="d-inline">
+            <input type="hidden" name="days_offset" value="30">
+            <button type="submit" class="btn btn-sm btn-outline-dark">+1 Month</button>
+        </form>
+        <form action="{{ url_for('dashboard.reset_date') }}" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-danger">Reset Time</button>
+        </form>
+        <div class="ms-3 align-self-center">
+            <small>Simulated date: <strong>{{ simulated_date }}</strong></small>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="dashboard">
 
     <!-- Column 1: Net Worth -->
