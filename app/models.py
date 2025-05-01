@@ -18,6 +18,9 @@ class Account(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     hourly_wage = db.Column(db.Float, nullable=True)
     hours_per_week = db.Column(db.Float, nullable=True)
+    pay_frequency = db.Column(db.String(10), default="weekly")  # weekly | biweekly
+    pay_day_of_week = db.Column(db.Integer, default=4)  # 0=Mon through 6=Sun (Friday default)
+    last_pay_credit = db.Column(db.Date, nullable=True)  # Track when last credited
 
     expenses = db.relationship('RecurringExpense', backref='account', lazy=True, cascade='all, delete-orphan')
     spendings = db.relationship('Spending', backref='account', lazy=True, cascade='all, delete-orphan')

@@ -30,6 +30,12 @@ def view():
 
     # Get the account
     account = account_svc.get_or_create_account(current_user.id)
+
+    # Process payday credit
+    bm = BudgetManager(db.session, account.id)
+    credited = bm.credit_payday_if_due(effective_date)
+    if credited:
+        flash(f"Payday! Your wages have been credited to your account.", "success")
     
     # Process any recurring expenses that should be added to spending records today
     expense_svc.process_recurring_expenses(account, effective_date)
@@ -58,6 +64,7 @@ def view():
         account_exists=bool(account.expenses or account.savings_goals),
         today=effective_date.strftime("%Y-%m-%d"),
         simulated_date=effective_date.strftime("%B-%d-%Y"),
+        account=account
     )
 
 
@@ -80,6 +87,8 @@ def save_financial():
     account.min_balance_goal = form.min_balance_goal.data
     account.hourly_wage = form.hourly_wage.data
     account.hours_per_week = form.hours_per_week.data
+    account.pay_frequency = form.pay_frequency.data
+    account.pay_day_of_week = int(form.pay_day_of_week.data)
 
     # complex lists
     account_svc.sync_financial_form(form, account)
@@ -157,6 +166,10 @@ def weekly_summary():
     data = bm.get_weekly_summary(4)
     return jsonify(data)
 
+# ---------------------
+#  ADMIN-ONLY TIME SIMULATION ENDPOINTS
+# ---------------------
+
 @dashboard.post("/dashboard/simulate_date")
 @login_required
 def simulate_date():
@@ -182,4 +195,20 @@ def reset_date():
         
     session.pop('date_simulation_offset', None)
     flash("Reset to current date", "info")
+    return redirect(url_for('.view'))
+
+@dashboard.post("/dashboard/reset_pay_credit")
+@login_required
+def reset_pay_credit():
+    # Only allow admin users
+    if current_user.email != current_app.config['ADMIN_EMAIL']:
+        flash("Not authorized", "danger")
+        return redirect(url_for('.view'))
+        
+    # Get account and reset last_pay_credit
+    account = account_svc.get_or_create_account(current_user.id)
+    account.last_pay_credit = None
+    db.session.commit()
+    
+    flash("Last pay credit date has been reset", "success")
     return redirect(url_for('.view'))

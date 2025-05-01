@@ -34,8 +34,16 @@
         <form action="{{ url_for('dashboard.reset_date') }}" method="POST" class="d-inline">
             <button type="submit" class="btn btn-sm btn-danger">Reset Time</button>
         </form>
+        <form action="{{ url_for('dashboard.reset_pay_credit') }}" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-warning">Reset Pay Date</button>
+        </form>
         <div class="ms-3 align-self-center">
             <small>Simulated date: <strong>{{ simulated_date }}</strong></small>
+        </div>
+        <div class="ms-3 align-self-center">
+            {% if account.last_pay_credit %}
+            <small>Last pay date: <strong>{{ account.last_pay_credit }}</strong></small>
+            {% endif %}
         </div>
     </div>
 </div>

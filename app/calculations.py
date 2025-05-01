@@ -198,3 +198,29 @@ class BudgetManager:
             })
         
         return list(reversed(results))  # Make oldest week come first
+    
+    def credit_payday_if_due(self, today=None):
+        """Credit wages on the user's scheduled payday"""
+        # If no custom date is provided, use today's date. this is for admin simulation purposes.
+        today = today or date.today()
+        acc = self.account
+        
+        # Check if today is the user's payday. weekday() returns 0 for monday, 1 for tuesday, etc
+        if today.weekday() != acc.pay_day_of_week:
+            return False # Exit if today is not the user's payday
+        
+        # Check if we already credited this pay cycle
+        cycle_days = 14 if acc.pay_frequency == "biweekly" else 7
+        if acc.last_pay_credit and (today - acc.last_pay_credit).days < cycle_days:
+            return False # Exit if we already credited this pay cycle
+        
+        # Calculate and credit payment
+        weekly_income = self.calculate_weekly_income()
+        # If biweekly, double the payment amount
+        payment = weekly_income * 2 if acc.pay_frequency == "biweekly" else weekly_income
+        
+        acc.current_balance += payment
+        acc.last_pay_credit = today
+        self.db.commit()
+        
+        return True

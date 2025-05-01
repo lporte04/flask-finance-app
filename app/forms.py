@@ -58,6 +58,19 @@ class FinancialForm(FlaskForm):
     min_balance_goal= FloatField('Minimum Balance Goal', validators=[Optional(), NumberRange(min=0)])
     hourly_wage     = FloatField('Hourly Wage', validators=[DataRequired(), NumberRange(min=0)])
     hours_per_week  = FloatField('Hours / Week', validators=[DataRequired(), NumberRange(min=0)])
+    pay_frequency = SelectField(
+        "Pay Frequency", 
+        choices=[("weekly", "Weekly"), ("biweekly", "Bi-Weekly")],
+        default="weekly"
+    )
+    # Using list comprehension to: loop through the days of the week and generate index #'s with enumerate()
+    # for each iteration, i is the index and d is the day of the week. str() is used to convert the index to a string because WTForms expects string value.
+    # and (str(i), d) creates a tuple of the index and the day of the week (ex. [("0", Monday)]). This (value, label) format is the format that WTForms expects for the choices parameter.
+    pay_day_of_week = SelectField(
+        "Pay-day",
+        choices=[(str(i), d) for i, d in enumerate(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])],
+        default="4" # Friday
+    )
 
     expenses = FieldList(FormField(_ExpenseEntry), min_entries=0)
     goals = FieldList(FormField(_GoalEntry), min_entries=0)
