@@ -15,6 +15,7 @@ from app.services import deposits as deposit_svc
 from app.services import dashboard_data as dashboard_svc
 from app.services import expense_processor as expense_svc
 from app.utilities.date_utils import get_effective_date
+from app.utilities.form_utils import flash_form_errors
 from app import db
 
 dashboard = Blueprint("dashboard", __name__)
@@ -76,9 +77,7 @@ def view():
 def save_financial():
     form = FinancialForm()
     if not form.validate_on_submit():
-        for field, errs in form.errors.items():
-            for err in errs:
-                flash(f"{field}: {err}", "danger")
+        flash_form_errors(form)
         return redirect(url_for(".view"))
 
     account = account_svc.get_or_create_account(current_user.id)
