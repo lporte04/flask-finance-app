@@ -1,6 +1,8 @@
 from datetime import date, timedelta
 from app import db
 from app.models import Spending
+from app.calculations import BudgetManager
+from flask import flash
 
 def process_recurring_expenses(account, custom_date=None):
     """
@@ -34,13 +36,16 @@ def _process_daily_expense(expense, account, today):
     ).first()
     
     if not existing:
-        spending = Spending(
-            item=f"Recurring: {expense.name}",
-            amount=expense.amount,
-            date=today,
-            account_id=account.id
-        )
-        db.session.add(spending)
+        bm = BudgetManager(db.session, account.id)
+        try:
+            # Try to make spending, will validate funds automatically
+            bm.make_personal_spend(
+                f"Recurring: {expense.name}", 
+                expense.amount,
+                today
+            )
+        except ValueError as e:
+            flash(str(e), "danger")
 
 def _process_weekly_expense(expense, account, today):
     """Process a weekly recurring expense (on Mondays)"""
@@ -59,13 +64,16 @@ def _process_weekly_expense(expense, account, today):
         ).first()
         
         if not existing:
-            spending = Spending(
-                item=f"Recurring: {expense.name}",
-                amount=expense.amount,
-                date=today,
-                account_id=account.id
-            )
-            db.session.add(spending)
+            bm = BudgetManager(db.session, account.id)
+            try:
+                # Try to make spending, will validate funds automatically
+                bm.make_personal_spend(
+                    f"Recurring: {expense.name}", 
+                    expense.amount,
+                    today
+                )
+            except ValueError as e:
+                flash(str(e), "danger")
 
 def _process_monthly_expense(expense, account, today):
     """Process a monthly recurring expense (on last day of month)"""
@@ -88,10 +96,13 @@ def _process_monthly_expense(expense, account, today):
         ).first()
         
         if not existing:
-            spending = Spending(
-                item=f"Recurring: {expense.name}",
-                amount=expense.amount,
-                date=today,
-                account_id=account.id
-            )
-            db.session.add(spending)
+            bm = BudgetManager(db.session, account.id)
+            try:
+                # Try to make spending, will validate funds automatically
+                bm.make_personal_spend(
+                    f"Recurring: {expense.name}", 
+                    expense.amount,
+                    today
+                )
+            except ValueError as e:
+                flash(str(e), "danger")

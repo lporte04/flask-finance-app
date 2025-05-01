@@ -166,6 +166,16 @@ def weekly_summary():
     data = bm.get_weekly_summary(4)
     return jsonify(data)
 
+@dashboard.route('/api/max-spend')
+@login_required
+def max_spend_api():
+    account = account_svc.get_or_create_account(current_user.id)
+    
+    # return current balance as max spendable amount
+    available = account.current_balance
+    
+    return jsonify({"max": round(available, 2)})
+
 # ---------------------
 #  ADMIN-ONLY TIME SIMULATION ENDPOINTS
 # ---------------------

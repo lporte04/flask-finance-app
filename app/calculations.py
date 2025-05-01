@@ -33,20 +33,25 @@ class BudgetManager:
 
         self.db.commit()
 
-    def make_personal_spend(self, item_name: str, amount: float):
+    def make_personal_spend(self, item_name: str, amount: float, today=None):
+        '''Make a personal spend and update the account balance accordingly.'''
+        today = today or date.today()
+
         if amount > self.account.current_balance:
-            raise ValueError("Insufficient funds for this spend.")
+            raise ValueError(f"Insufficient funds for '{item_name}'. You need ${amount:.2f} but have only ${self.account.current_balance:.2f}.")
 
         personal_spend = Spending(
             item=item_name,
             amount=amount,
-            date=date.today(),
+            date=today,
             account_id=self.account.id
         )
         self.db.add(personal_spend)
 
         self.account.current_balance -= amount
         self.db.commit()
+
+        return personal_spend
 
     def weeks_to_save_all(self) -> int:
         backup_balance = self.account.current_balance

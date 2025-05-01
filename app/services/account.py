@@ -1,6 +1,9 @@
 # app/services/account.py
 from app import db
 from app.models import (Account, RecurringExpense, SavingsGoal, Spending, Asset, Investment)
+from flask import flash
+from app.calculations import BudgetManager
+from app.utilities.date_utils import get_effective_date
 
 __all__ = [ # Define the public API of this module (what will be imported when using 'from module import *')
     "get_or_create_account",
@@ -82,6 +85,25 @@ def _upsert_collection(rows, model_cls, account: Account):
         row_id = row.get("id")
         payload = {k: v for k, v in row.items() # payload is a dict containing only the model columns (attributes to be stored in the DB), discarding the id and csrf_token
                    if k not in ("id", "csrf_token")}
+
+        # special handling for new spending records
+        if model_cls is Spending and not row_id:
+            try:
+                # process through BudgetManager to validate funds and reduce balance
+                bm = BudgetManager(db.session, account.id)
+                today = get_effective_date()
+                
+                spend = bm.make_personal_spend(
+                    payload["item"],
+                    float(payload["amount"]),
+                    today
+                )
+                # add to seen list to prevent deletion
+                seen.append(spend.id)
+                continue  # skip normal insertion path
+            except ValueError as e:
+                flash(str(e), "danger")
+                continue  # skip this row altogether
 
         # update existing records
         if row_id and row_id.strip(): # check if exists and is not empty
