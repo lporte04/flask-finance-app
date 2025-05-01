@@ -54,9 +54,17 @@
     <!-- Column 1: Net Worth -->
     <div class="column">
         <div class="module height-25 net-worth-box">
-            <h2>Your Estimated Net Worth</h2>
-            <p class="net-worth-value">${{ net_worth }}</p>
-        </div>
+            <div class="w-100 text-center">
+              <h2 class="mb-0 fs-5">Account Balance</h2>
+              <p class="net-worth-value my-1">${{ balance }}</p>
+              <p class="small text-muted mb-2">{{ balance_status }}</p>
+          
+              <hr class="my-3">
+          
+              <h3 class="fs-6 mb-0">Estimated Net Worth</h3>
+              <p class="fw-bold mt-1 mb-0">${{ net_worth }}</p>
+            </div>
+          </div>
         <div class="module height-75 fill">
             <h2>Asset Distribution</h2>
             <canvas id="netWorthDonutChart"></canvas>
