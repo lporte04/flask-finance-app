@@ -32,7 +32,7 @@ def get_dashboard_data(account):
         bal_status = f"You are ${abs(diff):.2f} below your minimum balance goal."
 
     # sort spendings by date (newest first)
-    sorted_spendings = sorted(account.spendings, key=lambda s: s.date, reverse=True)
+    sorted_spendings = sorted(account.spendings, key=lambda s: (s.date, s.id), reverse=True)
 
     # Filter purchased goals out from the dashboard display
     active_goals = [goal for goal in account.savings_goals if not goal.purchased]

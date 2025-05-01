@@ -91,12 +91,12 @@ def _upsert_collection(rows, model_cls, account: Account):
             try:
                 # process through BudgetManager to validate funds and reduce balance
                 bm = BudgetManager(db.session, account.id)
-                today = get_effective_date()
+                selected_date = payload.get("date") or get_effective_date()
                 
                 spend = bm.make_personal_spend(
                     payload["item"],
                     float(payload["amount"]),
-                    today
+                    selected_date
                 )
                 # add to seen list to prevent deletion
                 seen.append(spend.id)
