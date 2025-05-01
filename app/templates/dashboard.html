@@ -34,8 +34,16 @@
         <form action="{{ url_for('dashboard.reset_date') }}" method="POST" class="d-inline">
             <button type="submit" class="btn btn-sm btn-danger">Reset Time</button>
         </form>
+        <form action="{{ url_for('dashboard.reset_pay_credit') }}" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-warning">Reset Pay Date</button>
+        </form>
         <div class="ms-3 align-self-center">
             <small>Simulated date: <strong>{{ simulated_date }}</strong></small>
+        </div>
+        <div class="ms-3 align-self-center">
+            {% if account.last_pay_credit %}
+            <small>Last pay date: <strong>{{ account.last_pay_credit }}</strong></small>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -46,9 +54,17 @@
     <!-- Column 1: Net Worth -->
     <div class="column">
         <div class="module height-25 net-worth-box">
-            <h2>Your Estimated Net Worth</h2>
-            <p class="net-worth-value">${{ net_worth }}</p>
-        </div>
+            <div class="w-100 text-center">
+              <h2 class="mb-0 fs-5">Account Balance</h2>
+              <p class="net-worth-value my-1">${{ balance }}</p>
+              <p class="small text-muted mb-2">{{ balance_status }}</p>
+          
+              <hr class="my-3">
+          
+              <h3 class="fs-6 mb-0">Estimated Net Worth</h3>
+              <p class="fw-bold mt-1 mb-0">${{ net_worth }}</p>
+            </div>
+          </div>
         <div class="module height-75 fill">
             <h2>Asset Distribution</h2>
             <canvas id="netWorthDonutChart"></canvas>
@@ -427,4 +443,6 @@ if (stockSymbols.length > 0) {
 
 
   <script src="{{ url_for('static', filename='scripts/form_modal.js') }}"></script>
+  <script src="{{ url_for('static', filename='scripts/spending_display.js') }}"></script>
+  <script src="{{ url_for('static', filename='scripts/deposit_display.js') }}"></script>
 {% endblock %}

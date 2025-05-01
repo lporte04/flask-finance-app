@@ -33,20 +33,25 @@ class BudgetManager:
 
         self.db.commit()
 
-    def make_personal_spend(self, item_name: str, amount: float):
+    def make_personal_spend(self, item_name: str, amount: float, today=None):
+        '''Make a personal spend and update the account balance accordingly.'''
+        today = today or date.today()
+
         if amount > self.account.current_balance:
-            raise ValueError("Insufficient funds for this spend.")
+            raise ValueError(f"Insufficient funds for '{item_name}'. You need ${amount:.2f} but have only ${self.account.current_balance:.2f}.")
 
         personal_spend = Spending(
             item=item_name,
             amount=amount,
-            date=date.today(),
+            date=today,
             account_id=self.account.id
         )
         self.db.add(personal_spend)
 
         self.account.current_balance -= amount
         self.db.commit()
+
+        return personal_spend
 
     def weeks_to_save_all(self) -> int:
         backup_balance = self.account.current_balance
@@ -198,3 +203,29 @@ class BudgetManager:
             })
         
         return list(reversed(results))  # Make oldest week come first
+    
+    def credit_payday_if_due(self, today=None):
+        """Credit wages on the user's scheduled payday"""
+        # If no custom date is provided, use today's date. this is for admin simulation purposes.
+        today = today or date.today()
+        acc = self.account
+        
+        # Check if today is the user's payday. weekday() returns 0 for monday, 1 for tuesday, etc
+        if today.weekday() != acc.pay_day_of_week:
+            return False # Exit if today is not the user's payday
+        
+        # Check if we already credited this pay cycle
+        cycle_days = 14 if acc.pay_frequency == "biweekly" else 7
+        if acc.last_pay_credit and (today - acc.last_pay_credit).days < cycle_days:
+            return False # Exit if we already credited this pay cycle
+        
+        # Calculate and credit payment
+        weekly_income = self.calculate_weekly_income()
+        # If biweekly, double the payment amount
+        payment = weekly_income * 2 if acc.pay_frequency == "biweekly" else weekly_income
+        
+        acc.current_balance += payment
+        acc.last_pay_credit = today
+        self.db.commit()
+        
+        return True
