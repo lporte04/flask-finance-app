@@ -73,13 +73,16 @@
     <div class="sidebar">
       <div class="sidebar-header">
         <div class="user-info">
-          <a href="{{ url_for('main.index') }}"><h4>Company Name</h4></a>
+          <a href="{{ url_for('main.index') }}" class="d-inline-flex align-items-center gap-2 text-decoration-none">
+            <img src="{{ url_for('static', filename='images/finsight_logo_black.png') }}" alt="FinSight logo"
+                 width="32" height="32">
+            <h4 class="m-0 fw-semibold text-fs">FinSight</h4>
+        </a>
           <p class="mb-0">Welcome, {{ current_user.name }}</p>
         </div>
       </div>
 
         <a href="{{ url_for('dashboard.view') }}">Dashboard</a>
-        <a href="#">Investments</a>
         <a href="#">Settings</a>
         <a href="{{ url_for('auth.logout') }}">Logout</a>
     </div>
