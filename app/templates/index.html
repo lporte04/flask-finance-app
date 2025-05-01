@@ -1,8 +1,103 @@
 {% extends '_top-navbar.html' %}
 
-{% block title %}Index{% endblock %}
+{% block title %}FinSight - Home{% endblock %}
+
 {% block body %}
-<div class="main">
-    <h1>Placeholder Page</h1>
-</div>
+<header class="py-5 text-center text-white bg-fs">
+    <div class="container">
+        <h1 class="display-4 fw-bold">Master Your Money with FinSight</h1>
+        <p class="lead mb-4">The personal finance dashboard that turns numbers into insight.</p>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg px-4 me-2">Get Started Free</a>
+    </div>
+</header>
+
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-4 fw-bold">Why FinSight?</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="p-4 h-100 bg-white border rounded-3 shadow-sm">
+                    <h5 class="fw-semibold mb-2">Built for Humans</h5>
+                    <p class="mb-0">No spreadsheets, no jargon. Clean visuals make sense of your spending in seconds.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 h-100 bg-white border rounded-3 shadow-sm">
+                    <h5 class="fw-semibold mb-2">Actionable Insights</h5>
+                    <p class="mb-0">Smart tips and alerts nudge you toward healthy financial habits.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="p-4 h-100 bg-white border rounded-3 shadow-sm">
+                    <h5 class="fw-semibold mb-2">100 % Private</h5>
+                    <p class="mb-0">Your data stays on your account—never sold, never shared.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5 fw-bold">Key Features</h2>
+        <div class="row text-center g-4">
+
+            <div class="col-md-4">
+                <div class="icon mb-3 fs-1">💰</div>
+                <h5 class="fw-semibold">Income & Expense Tracking</h5>
+                <p class="text-muted">Log transactions in seconds and see exactly where your cash goes.</p>
+            </div>
+
+            <div class="col-md-4">
+                <div class="icon mb-3 fs-1">📊</div>
+                <h5 class="fw-semibold">Weekly Budget Overview</h5>
+                <p class="text-muted">Interactive charts reveal trends and overspending before it hurts.</p>
+            </div>
+
+            <div class="col-md-4">
+                <div class="icon mb-3 fs-1">🎯</div>
+                <h5 class="fw-semibold">Savings Goals Management</h5>
+                <p class="text-muted">Set goals, track progress, and celebrate every milestone.</p>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-6">
+                <img src="{{ url_for('static', filename='images/dashboard_preview.png') }}"
+                     class="img-fluid rounded-3 shadow-sm"
+                     alt="FinSight dashboard preview">
+            </div>
+            <div class="col-lg-6">
+                <h3 class="fw-bold mb-3">A Command Center for Your Finances</h3>
+                <p class="lead">Track net worth, visualize asset allocation, monitor investments, and uncover
+                    spending patterns—all in one place.</p>
+                <ul class="list-unstyled">
+                    <li class="mb-2">✔️ Real-time charts &amp; gauges</li>
+                    <li class="mb-2">✔️ Customizable widgets</li>
+                    <li class="mb-2">✔️ Mobile-friendly design</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA ------------------------------------------------>
+<section class="py-5 text-center bg-fs text-white">
+    <div class="container">
+        <h2 class="fw-bold mb-4">Ready to gain clarity on your money?</h2>
+        <a href="{{ url_for('auth.register') }}" class="btn btn-light btn-lg px-4">Create Your Free Account</a>
+    </div>
+</section>
+
+<!-- FOOTER -------------------------------------------->
+<footer class="mt-auto bg-dark text-white-50 py-3">
+    <div class="container small text-center">
+        © 2025 FinSight. Made by project team .
+    </div>
+</footer>
 {% endblock %}
