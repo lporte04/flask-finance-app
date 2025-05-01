@@ -40,7 +40,7 @@ def prefill_financial_form(form, account):
         row.form.amount.data = exp.amount
         row.form.frequency.data = exp.frequency
 
-    for goal in account.savings_goals:
+    for goal in [g for g in account.savings_goals if not g.purchased]:
         row = form.goals.append_entry()
         row.form.id.data = goal.id
         row.form.item.data = goal.item

@@ -50,8 +50,8 @@ def view():
     
     if data['savings_goals']:
         deposit_form.goal_id.choices = [
-            (g.id, f"{g.item} (${g.cost - g.current_amount:.2f} remaining)")
-            for g in data['savings_goals']
+            (g.id, f"{g.item} - ${g.current_amount:.2f} / ${g.cost:.2f} ({g.progress_percent:.0f}%)")
+            for g in data['savings_goals'] if not g.is_funded
         ]
     
     return render_template(
@@ -107,7 +107,10 @@ def save_deposit():
     form.goal_id.choices = [(g.id, g.item) for g in account.savings_goals]
 
     if not form.validate_on_submit():
-        flash("Invalid data", "danger")
+        for field, errors in form.errors.items():
+            for error in errors:
+                field_name = getattr(form, field).label.text  # Get the human-readable field name
+                flash(f"{field_name}: {error}", "danger")
         return redirect(url_for(".view"))
 
     try:
@@ -175,6 +178,23 @@ def max_spend_api():
     available = account.current_balance
     
     return jsonify({"max": round(available, 2)})
+
+@dashboard.route('/api/max-deposit')
+@login_required
+def max_deposit_api():
+    account = account_svc.get_or_create_account(current_user.id)
+    
+    # maximum deposit is total available balance
+    available = account.current_balance
+    
+    # safe deposit is amount above minimum balance goal. Handles case wher no goal is set.
+    min_goal = account.min_balance_goal or 0
+    safe_amount = max(0, account.current_balance - min_goal)
+    
+    return jsonify({
+        "max": round(available, 2),
+        "safe": round(safe_amount, 2)
+    })
 
 # ---------------------
 #  ADMIN-ONLY TIME SIMULATION ENDPOINTS

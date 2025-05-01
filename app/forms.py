@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import Form, StringField, PasswordField, SubmitField, FloatField, SelectField, FormField, DateField, HiddenField, FieldList
-from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError, NumberRange, Optional
+from wtforms.validators import DataRequired, Email, Length, EqualTo, ValidationError, NumberRange, Optional, InputRequired
 from app.models import User
 from datetime import date
 
@@ -82,6 +82,8 @@ class FinancialForm(FlaskForm):
 
 class SavingsDepositForm(FlaskForm):
     """Form for adding a single deposit to a savings goal"""
-    amount = FloatField('Amount', validators=[DataRequired(), NumberRange(min=0.01)])
+    amount = FloatField('Amount', validators=[InputRequired(), NumberRange(min=0.01)])
     goal_id = SelectField('Savings Goal', coerce=int, validators=[DataRequired()])
     submit = SubmitField('Make Deposit')
+
+    

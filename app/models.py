@@ -47,6 +47,8 @@ class SavingsGoal(db.Model): # Let the user set a savings goal for a specific it
     item = db.Column(db.String(100), nullable=False)
     cost = db.Column(db.Float, nullable=False)
     account_id = db.Column(db.Integer, db.ForeignKey('account.id'), nullable=False)
+    purchased = db.Column(db.Boolean, default=False) # Track if the goal has been purchased
+    purchase_date = db.Column(db.Date, nullable=True) # Track when the goal was purchased
 
     # This is a relationship to the SavingsDeposit class. It allows us to access all deposits made towards this goal.
     # cascade="all, delete-orphan" means that if a SavingsGoal is deleted, all its associated SavingsDeposits will also be deleted.
