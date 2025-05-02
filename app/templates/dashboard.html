@@ -189,22 +189,63 @@
     
 
 
-    // Donut chart for investments
+    // Donut chart for investments with proper instance management
+function renderInvestmentAllocation() {
     var ctx2 = document.getElementById('investmentDonutChart').getContext('2d');
 
     var investmentLabels = [{% for inv in investments %}"{{ inv.stock_name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
     var investmentAmounts = [{% for inv in investments %}{{ inv.amount or 0 }}{% if not loop.last %}, {% endif %}{% endfor %}];
 
-    new Chart(ctx2, {
+    // Check if we have any data
+    if (investmentAmounts.length === 0 || investmentAmounts.every(amt => amt === 0)) {
+        ctx2.font = '14px Arial';
+        ctx2.textAlign = 'center';
+        ctx2.fillStyle = '#666';
+        ctx2.fillText('No investment data available', ctx2.canvas.width / 2, ctx2.canvas.height / 2);
+        return;
+    }
+
+    // Destroy existing chart to prevent flickering
+    if (window.investmentAllocationChart) {
+        window.investmentAllocationChart.destroy();
+    }
+
+    window.investmentAllocationChart = new Chart(ctx2, {
         type: 'doughnut',
         data: {
             labels: investmentLabels,
             datasets: [{
                 data: investmentAmounts,
                 backgroundColor: ['#003300', '#006600', '#009933', '#33cc33', '#99ff99'],
+                borderWidth: 1
             }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: {
+                duration: 500 // Shorter animation to reduce flickering
+            },
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
         }
     });
+}
+
+// Call the function when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    renderInvestmentAllocation();
+    
+    // Auto-load all user's stock investments
+    const stockSymbols = [{% for inv in investments %}"{{ inv.stock_name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
+    if (stockSymbols.length > 0) {
+        renderMultiStockChart(stockSymbols);
+    }
+});
+
     //financial health gauge
     const healthGauge = document.getElementById('healthGauge').getContext('2d');
 
@@ -242,134 +283,137 @@
     });
 
     // Investment history line chart
-async function renderMultiStockChart(symbols) {
-    const response = await fetch('/stock-history?' + symbols.map(s => `symbol=${s}`).join('&'));
-    const data = await response.json();
+    async function renderMultiStockChart(symbols) {
+        try {
+            // Show loading state
+            const chartContainer = document.getElementById('investmentLineChart').parentNode;
+            chartContainer.innerHTML += '<div id="chart-loading" class="text-center my-3">Loading investment data...</div>';
+            
+            const response = await fetch('/stock-history-yahoo?' + symbols.map(s => `symbol=${s}`).join('&'));
+            const data = await response.json();
 
-    const colors = ['#003300', '#006600', '#009933', '#33cc33', '#99ff99'];
-    const datasets = [];
-
-    // Process the stock data for monthly aggregation
-    symbols.forEach((symbol, index) => {
-        const stockData = data[symbol] || [];
-        
-        // Aggregate daily data into monthly data
-        const monthlyData = [];
-        let currentMonth = '';
-        let monthData = [];
-
-        stockData.forEach((entry) => {
-            const date = new Date(entry.date);
-            const month = `${date.getFullYear()}-${date.getMonth() + 1}`;  // Format: YYYY-MM
-
-            // If it's the same month, collect the data
-            if (month === currentMonth) {
-                monthData.push(entry.close);
-            } else {
-                // If we moved to a new month, push the previous month's data (use the last price for that month)
-                if (currentMonth) {
-                    const monthClose = monthData[monthData.length - 1];  // Use the last closing price for the month
-                    monthlyData.push({ date: currentMonth, close: monthClose });
+            console.log("Yahoo API Response:", data);
+            
+            // Remove loading message
+            const loadingMsg = document.getElementById('chart-loading');
+            if (loadingMsg) loadingMsg.remove();
+            
+            // Check for errors
+            if (data.error || Object.keys(data).some(k => k.endsWith('_error'))) {
+                // Get error message
+                let errorMsg = data.error || "Failed to load investment data";
+                
+                // If we have individual symbol errors, show the first one
+                const errorKeys = Object.keys(data).filter(k => k.endsWith('_error'));
+                if (errorKeys.length > 0) {
+                    errorMsg = data[errorKeys[0]];
                 }
-                // Start a new month
-                currentMonth = month;
-                monthData = [entry.close];
+                
+                // Display simple error message
+                const ctx = document.getElementById('investmentLineChart').getContext('2d');
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillText(errorMsg, ctx.canvas.width / 2, ctx.canvas.height / 2);
+                
+                console.error("Investment chart error:", errorMsg);
+                return;
             }
-        });
-
-        // Push the last month's data
-        if (monthData.length > 0) {
-            const monthClose = monthData[monthData.length - 1];  // Use the last closing price for the month
-            monthlyData.push({ date: currentMonth, close: monthClose });
-        }
-
-        // Create the dataset for the chart
-        datasets.push({
-            label: symbol,
-            data: monthlyData.map(d => d.close), // Only use the closing price
-            borderColor: colors[index % colors.length],
-            fill: false,
-            tension: 0.1
-        });
-    });
-
-    const ctx5 = document.getElementById('investmentLineChart').getContext('2d');
-
-    // Prepare the labels (months)
-    const labels = datasets.length > 0 && datasets[0].data.length > 0 
-        ? datasets[0].data.map((_, i) => datasets[0].data[i].date)
-        : [];
-
-    new Chart(ctx5, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: datasets
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            layout: {
-                padding: {
-                    top: 20,
-                    bottom: 10
-                }
-            },
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'bottom'
+            
+            // Check if we have any valid data
+            const hasData = Object.values(data).some(arr => Array.isArray(arr) && arr.length > 0);
+            if (!hasData) {
+                const ctx = document.getElementById('investmentLineChart').getContext('2d');
+                ctx.font = '14px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#666';
+                ctx.fillText('No investment data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+    
+            const colors = ['#003300', '#006600', '#009933', '#33cc33', '#99ff99'];
+            const datasets = [];
+            const allDates = new Set();
+    
+            // Process each stock's data and collect all dates
+            symbols.forEach((symbol, index) => {
+                const stockData = data[symbol] || [];
+                if (!stockData.length) return; // Skip if no data
+                
+                // Collect all dates for x-axis labels
+                stockData.forEach(entry => allDates.add(entry.date.substring(0, 7))); // Get YYYY-MM format
+                
+                datasets.push({
+                    label: symbol,
+                    data: stockData.map(d => d.close),
+                    borderColor: colors[index % colors.length],
+                    backgroundColor: colors[index % colors.length] + '33', // Add transparency
+                    fill: false,
+                    tension: 0.1
+                });
+            });
+    
+            // Convert dates Set to sorted array for labels
+            const labels = Array.from(allDates).sort();
+    
+            // Get canvas context and create chart
+            const ctx = document.getElementById('investmentLineChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (window.investmentTrendsChart) {
+                window.investmentTrendsChart.destroy();
+            }
+    
+            window.investmentTrendsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
                 },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false
-                }
-            },
-            interaction: {
-                mode: 'nearest',
-                axis: 'x',
-                intersect: false
-            },
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Month',
-                        font: {
-                            size: 14
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: {
+                        duration: 500 // Shorter animation to reduce flickering
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
                         }
                     },
-                    ticks: {
-                        font: {
-                            size: 12
-                        }
-                    }
-                },
-                y: {
-                    beginAtZero: false,
-                    title: {
-                        display: true,
-                        text: 'Price ($)',
-                        font: {
-                            size: 16
-                        }
-                    },
-                    ticks: {
-                        font: {
-                            size: 14
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Month'
+                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Price ($)'
+                            }
                         }
                     }
                 }
-            }
+            });
+        } catch (error) {
+            console.error("Error rendering investment chart:", error);
+            const ctx = document.getElementById('investmentLineChart').getContext('2d');
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillText('Failed to load investment data', ctx.canvas.width / 2, ctx.canvas.height / 2);
         }
-    });
-}
+    }
 
-// Auto-load all user's stock investments
-const stockSymbols = [{% for inv in investments %}"{{ inv.stock_name }}"{% if not loop.last %}, {% endif %}{% endfor %}];
-if (stockSymbols.length > 0) {
-    renderMultiStockChart(stockSymbols);
-}
+
 
     //income vs expenses chart
     fetch('/weekly-summary')
