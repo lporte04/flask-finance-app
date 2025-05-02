@@ -42,9 +42,11 @@ def create_app(config_class=Config):
     from app.routes.main import main
     from app.routes.auth import auth
     from app.routes.dashboard import dashboard
+    from app.routes.errors import errors
     
     app.register_blueprint(main)
     app.register_blueprint(auth)
     app.register_blueprint(dashboard)
+    app.register_blueprint(errors)
     
     return app
