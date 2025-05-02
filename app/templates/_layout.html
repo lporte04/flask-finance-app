@@ -43,6 +43,15 @@
           margin-left: 240px;
           padding: 1rem 2rem 0;
         }
+
+        :root{
+          --fs-green:#0a751e;
+          --fs-green-dark:#064e13;
+        }
+        .bg-fs   {background:var(--fs-green) !important;}
+        .text-fs {color:var(--fs-green) !important;}
+        .btn-fs  {background:var(--fs-green);color:#fff;}
+        .btn-fs:hover{background:var(--fs-green-dark);color:#fff;}
   </style>
   {% block styles %}{% endblock %}
 </head>
@@ -83,7 +92,7 @@
       </div>
 
         <a href="{{ url_for('dashboard.view') }}">Dashboard</a>
-        <a href="#">Settings</a>
+        <a href="{{ url_for('auth.change_password') }}">Settings</a>
         <a href="{{ url_for('auth.logout') }}">Logout</a>
     </div>
     <div class="main">{% block body %}{% endblock %}</div>

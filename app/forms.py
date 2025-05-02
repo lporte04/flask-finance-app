@@ -22,6 +22,12 @@ class LoginForm(FlaskForm): # Consider adding "remember me" functionality later
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
+class ChangePasswordForm(FlaskForm):
+    current_password = PasswordField('Current Password', validators=[DataRequired()])
+    new_password = PasswordField('New Password', validators=[DataRequired()])
+    confirm_password = PasswordField('Confirm New Password', validators=[DataRequired(), EqualTo('new_password')])
+    submit = SubmitField('Change Password')
+
 # subforms
 class _ExpenseEntry(Form):
     id       = HiddenField()                      # Prefilled when editing

@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
-from app.forms import RegistrationForm, LoginForm
+from app.forms import RegistrationForm, LoginForm, ChangePasswordForm
 from app.models import User
 from app import db, bcrypt
 from flask_login import login_user, logout_user, current_user, login_required
@@ -55,3 +55,24 @@ def logout():
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('main.index'))
+
+@auth.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        # Verify current password
+        user = User.query.get(current_user.id)
+        if bcrypt.check_password_hash(user.password, form.current_password.data):
+            # Hash the new password
+            hashed_password = bcrypt.generate_password_hash(form.new_password.data).decode('utf-8')
+            # Update user's password
+            user.password = hashed_password
+            db.session.commit()
+            
+            flash('Your password has been updated!', 'success')
+            return redirect(url_for('dashboard.view'))
+        else:
+            flash('Current password is incorrect.', 'danger')
+    
+    return render_template('change_password.html', form=form)
