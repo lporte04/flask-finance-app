@@ -123,40 +123,64 @@ def save_deposit():
 # ---------------------
 #  API ENDPOINTS
 # ---------------------
-
-@dashboard.route('/stock-history')
+@dashboard.route('/stock-history-yahoo')
 @login_required
-def multi_stock_history():
-    symbols = request.args.getlist('symbol') 
-    API_KEY = 'L3EONWL3A9WT85W1'
-
+def yahoo_stock_history():
+    """Use Yahoo Finance instead of Alpha Vantage"""
+    symbols = request.args.getlist('symbol')
+    
+    # Add caching logic to reduce API calls
+    cache_key = f"yahoo_stock_data_{'_'.join(sorted(symbols))}"
+    cached_data = session.get(cache_key)
+    
+    # Return cached data if available and not expired (cache for 7 days)
+    if cached_data and cached_data.get('timestamp', 0) > (date.today().toordinal() - 7):
+        return jsonify(cached_data['data'])
+    
     all_data = {}
-    for symbol in symbols:
-        url = 'https://www.alphavantage.co/query'
-        params = {
-            'function': 'TIME_SERIES_DAILY',
-            'symbol': symbol,
-            'apikey': API_KEY
+    try:
+        for symbol in symbols:
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+            params = {
+                'interval': '1wk',  # weekly data
+                'range': '6mo'      # 6 months
+            }
+            
+            r = requests.get(url, params=params, headers=headers, timeout=10)
+            data = r.json()
+            
+            # Parse Yahoo Finance data format
+            if 'chart' in data and 'result' in data['chart'] and data['chart']['result']:
+                result = data['chart']['result'][0]
+                timestamps = result['timestamp']
+                quotes = result['indicators']['quote'][0]
+                
+                history = []
+                for i, ts in enumerate(timestamps):
+                    if 'close' in quotes and quotes['close'][i] is not None:
+                        # Convert timestamp to date format
+                        dt = date.fromtimestamp(ts)
+                        history.append({
+                            'date': dt.isoformat(),
+                            'close': quotes['close'][i]
+                        })
+                
+                all_data[symbol] = history
+            else:
+                all_data[f'{symbol}_error'] = "No data available from Yahoo Finance"
+                
+        # Cache the results
+        session[cache_key] = {
+            'timestamp': date.today().toordinal(),
+            'data': all_data
         }
-        r = requests.get(url, params=params)
-        data = r.json()
-
-        if 'Time Series (Daily)' not in data:
-            continue
-
-        series = data['Time Series (Daily)']
+                
+    except Exception as e:
+        all_data['error'] = f"Failed to fetch data: {str(e)}"
         
-        # Convert to a list of dictionaries with date and closing price
-        history = [
-            {'date': d, 'close': float(v['4. close'])}
-            for d, v in sorted(series.items(), reverse=False)
-        ]
-
-        # Only get the last 6 months of data (approximately 6 months = 180 days)
-        history = history[:180]
-
-        all_data[symbol] = history
-
     return jsonify(all_data)
 
 @dashboard.route('/weekly-summary')
